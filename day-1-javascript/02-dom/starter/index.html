@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What can JavaScript do?</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 560px; margin: 32px auto; padding: 0 16px; line-height: 1.5; }
+        button { font: inherit; padding: 8px 16px; border-radius: 999px; border: 0; background: #1e8e5e; color: #fff; cursor: pointer; }
+        li { margin: 4px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>What can JavaScript do?</h1>
+
+    <!-- The old way: JavaScript written inside the HTML. Works, but hard to read. -->
+    <p id="demo">It can change the HTML text.</p>
+    <button type="button" onclick='document.getElementById("demo").textContent = "You clicked me!"'>Click me (the old way)</button>
+
+    <hr>
+
+    <!-- Everything below is driven from dom.js -->
+    <p id="message">This text is waiting for JavaScript.</p>
+    <button id="change">Change the text</button>
+
+    <p id="count">Clicked 0 times</p>
+    <button id="add-one">Add one</button>
+    <button id="reset">Reset</button>
+
+    <h2>Order</h2>
+    <button class="dish" data-name="Masala dosa" data-price="60">Masala dosa · ₹60</button>
+    <button class="dish" data-name="Filter coffee" data-price="20">Filter coffee · ₹20</button>
+    <ul id="list"></ul>
+
+    <script src="dom.js"></script>
+
+</body>
+</html>
