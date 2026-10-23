@@ -10,6 +10,7 @@ console.log('ready');
 // 1a. Select all the dish buttons. They all have the class "add".
 //     Hint: document.querySelectorAll('.add')
 // 1b. For each button, listen for a 'click'.
+//     Hint: for (const button of addButtons) { button.addEventListener('click', () => { ... }); }
 // 1c. When a button is clicked, log the dish name.
 //     Hint: every button has data-name="..." in the HTML → button.dataset.name
 // ✅ Checkpoint: clicking Add on Masala dosa logs "Masala dosa".
@@ -21,9 +22,11 @@ console.log('ready');
 // 2b. On each click, push an object { name, price } into order.
 //     The price is in data-price="..." → button.dataset.price
 // 2c. Write a function called render() that:
-//       - empties the list #order
+//       - empties the list #order          Hint: orderList.innerHTML = ''
 //       - adds one <li> per item, showing its name and price
-//     Hint: document.createElement('li'), li.textContent = ..., list.append(li)
+//     Hint: document.querySelector('#order') finds the list.
+//     Hint: for (const item of order) { ... }, then
+//           document.createElement('li'), line.textContent = ..., orderList.append(line)
 // 2d. Call render() after every change to order.
 // ✅ Checkpoint: three clicks show three lines.
 
@@ -31,6 +34,7 @@ console.log('ready');
 
 // STEP 3 · The total
 // 3a. Inside render(), add up all the prices and show "Total: ₹…" in #total.
+//     Hint: let total = 0 before the loop, and total = total + item.price inside it.
 // 3b. Test it: add Masala dosa (₹60) and Idli (₹40). Is the total ₹100?
 //     If not: predict what typeof button.dataset.price gives you, then check in the console.
 // ✅ Checkpoint: ₹60 + ₹40 shows Total: ₹100.
@@ -39,10 +43,12 @@ console.log('ready');
 
 // STEP 4 · Remove and clear
 // 4a. Give each <li> a × button that removes that one item, then calls render().
-//     Hint: order.splice(index, 1) removes the item at position index.
+//     Hint: order.indexOf(item) gives the item's position.
+//           order.splice(index, 1) removes 1 item at that position.
 // 4b. Make the Clear order button (#clear) empty the order.
 // 4c. Show the message #empty only when the order is empty.
 //     Hint: element.hidden = true hides it, element.hidden = false shows it.
+//           Use if (order.length === 0) { ... } else { ... }
 // ✅ Checkpoint: removing and clearing both update the total.
 
 
