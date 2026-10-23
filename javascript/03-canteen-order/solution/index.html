@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canteen Order</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Atria Canteen</h1>
+    <p>Block C · open till 4 pm</p>
+  </header>
+
+  <main class="layout">
+    <section class="menu" aria-labelledby="menu-title">
+      <h2 id="menu-title">Today’s menu</h2>
+      <div class="dishes">
+        <article class="dish">
+          <h3>Masala dosa</h3>
+          <p class="price">₹60</p>
+          <button class="add" data-name="Masala dosa" data-price="60">Add</button>
+        </article>
+        <article class="dish">
+          <h3>Idli (2)</h3>
+          <p class="price">₹40</p>
+          <button class="add" data-name="Idli (2)" data-price="40">Add</button>
+        </article>
+        <article class="dish">
+          <h3>Vada</h3>
+          <p class="price">₹30</p>
+          <button class="add" data-name="Vada" data-price="30">Add</button>
+        </article>
+        <article class="dish">
+          <h3>Filter coffee</h3>
+          <p class="price">₹20</p>
+          <button class="add" data-name="Filter coffee" data-price="20">Add</button>
+        </article>
+        <article class="dish">
+          <h3>Lemon rice</h3>
+          <p class="price">₹50</p>
+          <button class="add" data-name="Lemon rice" data-price="50">Add</button>
+        </article>
+        <article class="dish">
+          <h3>Curd rice</h3>
+          <p class="price">₹45</p>
+          <button class="add" data-name="Curd rice" data-price="45">Add</button>
+        </article>
+      </div>
+    </section>
+
+    <aside class="order" aria-labelledby="order-title">
+      <h2 id="order-title">Your order</h2>
+      <p id="empty">Your order is empty. Tap Add on a dish.</p>
+      <ul id="order"></ul>
+      <p id="total">Total: ₹0</p>
+      <button id="clear">Clear order</button>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

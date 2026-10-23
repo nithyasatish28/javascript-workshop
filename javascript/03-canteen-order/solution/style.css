@@ -1,0 +1,105 @@
+/* Canteen Order: all the styling is done for you. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #fbf8f1;
+  color: #14213d;
+  line-height: 1.4;
+}
+
+.top {
+  background: #14213d;
+  color: #fff;
+  padding: 18px 20px;
+}
+.top h1 { margin: 0; font-size: 1.6rem; }
+.top p { margin: 4px 0 0; opacity: 0.75; }
+
+.layout {
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+@media (min-width: 760px) {
+  .layout { grid-template-columns: 2fr 1fr; align-items: start; }
+}
+
+h2 { margin: 0 0 12px; font-size: 1.25rem; }
+
+.dishes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.dish {
+  background: #fff;
+  border: 1px solid #e4ded0;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dish h3 { margin: 0; font-size: 1.05rem; }
+.price { margin: 0; color: #4a5568; font-weight: 600; }
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  min-height: 44px;
+  font-weight: 700;
+}
+button:focus-visible { outline: 3px solid #2b59c3; outline-offset: 2px; }
+
+.add { background: #1e8e5e; color: #fff; margin-top: auto; }
+.add:hover { background: #18774e; }
+
+.order {
+  background: #fff;
+  border: 1px solid #e4ded0;
+  border-radius: 14px;
+  padding: 16px;
+  position: sticky;
+  top: 16px;
+}
+
+#empty { color: #4a5568; margin: 0 0 8px; }
+
+#order {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#order li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0ebe0;
+}
+#order li button {
+  background: #fbe3e1;
+  color: #9e2626;
+  min-height: 36px;
+  min-width: 36px;
+  padding: 4px 10px;
+}
+
+#total {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 14px 0;
+}
+
+#clear { background: #14213d; color: #fff; width: 100%; }
+#clear:hover { background: #22345c; }
