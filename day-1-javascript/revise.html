@@ -25,7 +25,7 @@
   --bad: #ff9c8c;
   --ink: #0e1c19;
   --ink-2: #132622;
-
+ 
   --f-chalk: "Caveat Brush", "Segoe Print", "Bradley Hand", cursive;
   --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --f-code: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -48,7 +48,7 @@ button { font: inherit; cursor: pointer; }
 button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28); padding: 1px 6px; border-radius: 5px; color: var(--yellow); }
 [hidden] { display: none !important; }
-
+ 
 /* header */
 .bar {
   display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between;
@@ -72,7 +72,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 }
 .ghost:hover { border-color: var(--chalk-faint); color: var(--chalk); }
 .ghost.warn { border-color: var(--bad); color: var(--bad); }
-
+ 
 /* level strip */
 #levels {
   display: flex; flex-wrap: wrap; gap: 10px; padding: 16px max(18px, env(safe-area-inset-left)) 4px; max-width: 1400px; margin: 0 auto;
@@ -90,14 +90,14 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 .lv.boss { width: 58px; border-radius: 14px; }
 .lv .lock { position: absolute; right: -4px; bottom: -4px; font-size: .7rem; background: var(--board); border-radius: 50%; padding: 1px 2px; }
 .strip-label { width: 100%; color: var(--chalk-faint); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
-
+ 
 /* main grid */
 .grid {
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px;
   padding: 14px max(18px, env(safe-area-inset-left)) 40px; max-width: 1400px; margin: 0 auto;
 }
 @media (min-width: 1050px) { .grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; } }
-
+ 
 .panel {
   background: var(--board-2); border: 2px solid rgba(255,255,255,.06); border-radius: 16px; padding: 22px 24px; min-width: 0;
   box-shadow: inset 0 0 60px rgba(0,0,0,.18);
@@ -117,7 +117,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 .hintbox summary::before { content: "💡"; }
 .hintbox div { margin-top: 8px; background: rgba(0,0,0,.2); border-radius: 10px; padding: 10px 14px; color: var(--chalk-dim); }
 .hintbox pre { margin: 6px 0 0; font-family: var(--f-code); font-size: .85rem; color: var(--chalk); white-space: pre-wrap; }
-
+ 
 .tests h3 { font-family: var(--f-chalk); font-weight: 400; font-size: 1.6rem; margin: 18px 0 6px; }
 .tests ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .tests li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: start; background: rgba(0,0,0,.16); border-radius: 10px; padding: 8px 12px; }
@@ -126,7 +126,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 .tests li.fail .ic { color: var(--bad); }
 .tests li.wait .ic { color: var(--chalk-faint); }
 .tests .why { display: block; color: var(--bad); font-size: .88rem; margin-top: 2px; font-family: var(--f-code); white-space: pre-wrap; overflow-wrap: anywhere; }
-
+ 
 .win {
   margin-top: 16px; border: 3px dashed var(--yellow); border-radius: 14px; padding: 14px 18px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
   background: rgba(245,211,106,.08);
@@ -135,7 +135,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 .win span { color: var(--chalk-dim); }
 .skipline { margin-top: 12px; color: var(--chalk-faint); font-size: .9rem; }
 .skipline button { background: none; border: 0; color: var(--pink); text-decoration: underline; padding: 0; }
-
+ 
 /* workbench */
 .work { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
 .filebar { display: flex; justify-content: space-between; align-items: center; color: var(--chalk-dim); font-size: .85rem; gap: 10px; flex-wrap: wrap; }
@@ -158,7 +158,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 .code-wrap textarea { background: transparent; color: transparent; caret-color: var(--yellow); resize: none; outline: none; }
 .code-wrap textarea::selection { background: rgba(158,210,239,.3); color: transparent; }
 .t-s { color: var(--yellow); } .t-k { color: var(--blue); font-weight: 600; } .t-n { color: var(--pink); } .t-c { color: #7c9790; font-style: italic; } .t-f { color: #c9e7b8; }
-
+ 
 .tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .run {
   background: var(--yellow); color: var(--ink); border: 0; border-radius: 12px; padding: 12px 22px; font-weight: 700; font-size: 1.05rem;
@@ -170,7 +170,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 .sec:hover { color: var(--chalk); border-color: var(--chalk-faint); }
 .next { background: var(--good); color: var(--ink); border: 0; border-radius: 12px; padding: 11px 20px; font-weight: 700; }
 .tools .msg { color: var(--chalk-faint); font-size: .9rem; }
-
+ 
 .out { background: var(--ink); border-radius: 12px; border: 2px solid #0a1513; overflow: hidden; }
 .tabs { display: flex; gap: 2px; background: var(--ink-2); padding: 6px 6px 0; }
 .tab { background: transparent; border: 0; color: var(--chalk-faint); padding: 7px 14px; border-radius: 8px 8px 0 0; font-size: .9rem; }
@@ -181,7 +181,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 .console .info { color: var(--chalk-faint); font-style: italic; }
 .page-pane { height: 230px; background: #fff; }
 .page-pane iframe { width: 100%; height: 100%; border: 0; display: block; }
-
+ 
 /* finale */
 .finale { position: fixed; inset: 0; background: rgba(8,18,16,.86); display: grid; place-items: center; padding: 20px; z-index: 30; }
 .finale .card {
@@ -196,7 +196,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 .finale li.sk::before { content: "↷ "; color: var(--pink); font-weight: 700; }
 .finale p { color: var(--chalk-dim); }
 #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
-
+ 
 @media (max-width: 600px) {
   .brief h2 { font-size: 2rem; }
   .editor { height: 320px; }
@@ -205,7 +205,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
 </style>
 </head>
 <body>
-
+ 
 <header class="bar">
   <div class="brand">
     <div class="logo" aria-hidden="true">JS</div>
@@ -220,12 +220,12 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
     <button class="ghost" id="resetAll" type="button">Start over</button>
   </div>
 </header>
-
+ 
 <nav id="levels" aria-label="Levels"></nav>
-
+ 
 <main class="grid">
   <section class="panel brief" id="brief" aria-live="polite"></section>
-
+ 
   <section class="panel work">
     <div class="filebar">
       <span>Your code · <span class="fname" id="fname">level-1.js</span></span>
@@ -253,7 +253,7 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
     </div>
   </section>
 </main>
-
+ 
 <div class="finale" id="finale" hidden>
   <div class="card">
     <h2>You saved the canteen!</h2>
@@ -266,27 +266,27 @@ code { font-family: var(--f-code); font-size: .88em; background: rgba(0,0,0,.28)
   </div>
 </div>
 <canvas id="confetti" aria-hidden="true"></canvas>
-
+ 
 <!-- ───────────── Starter code for each level ───────────── -->
 <script type="text/plain" id="starter-1">
 // Level 1 · Write your code below this line
-
+ 
 </script>
 <script type="text/plain" id="starter-2">
 const name = "Atria Canteen";
 const hour = 4;
-
+ 
 // Change the next line. Use backticks and ${ } to build the message.
 const welcome = "";
-
+ 
 console.log(welcome);
 </script>
 <script type="text/plain" id="starter-3">
 const price = "60";   // this came from the page, so it's text
 const coffee = 20;
-
+ 
 const total = price + coffee;
-
+ 
 console.log(total);
 console.log(typeof price);
 </script>
@@ -296,7 +296,7 @@ function rushLevel(people) {
   // 10 to 29      → "Busy"
   // 30 or more    → "Packed"
 }
-
+ 
 console.log(rushLevel(5));
 console.log(rushLevel(20));
 console.log(rushLevel(45));
@@ -308,14 +308,14 @@ function isFreeCoffeeDay(day) {
   }
   return false;
 }
-
+ 
 console.log(isFreeCoffeeDay("Friday"));   // should be true
 console.log(isFreeCoffeeDay("Monday"));   // should be false
 </script>
 <script type="text/plain" id="starter-6">
 // Write orderSlip here
-
-
+ 
+ 
 console.log(orderSlip("Masala dosa", 2));   // 2 x Masala dosa
 console.log(orderSlip("Vada"));             // 1 x Vada
 </script>
@@ -323,7 +323,7 @@ console.log(orderSlip("Vada"));             // 1 x Vada
 function billTotal(prices) {
   // Add up every price in the array and return the total
 }
-
+ 
 console.log(billTotal([60, 40]));       // 100
 console.log(billTotal([20, 20, 20]));   // 60
 console.log(billTotal([]));             // 0
@@ -332,17 +332,17 @@ console.log(billTotal([]));             // 0
 function under(prices, budget) {
   // Return a NEW array with only the prices you can afford
 }
-
+ 
 const menuPrices = [60, 40, 30, 20, 50, 45];
 console.log(under(menuPrices, 40));   // [40, 30, 20]
 </script>
 <script type="text/plain" id="starter-9">
 const dish = { name: "Masala dosa", price: 60, veg: true };
-
+ 
 function menuLine(dish) {
   // Return "Masala dosa - Rs.60 - Veg"
 }
-
+ 
 console.log(menuLine(dish));
 console.log(menuLine({ name: "Egg puff", price: 25, veg: false }));   // Egg puff - Rs.25 - Non-veg
 </script>
@@ -353,55 +353,55 @@ const menu = [
   { name: "Vada",          price: 30 },
   { name: "Filter coffee", price: 20 }
 ];
-
+ 
 function findDish(menu, name) {
   // Return the dish object with this name, or null if there isn't one
 }
-
+ 
 console.log(findDish(menu, "Vada"));    // { name: "Vada", price: 30 }
 console.log(findDish(menu, "Pizza"));   // null
 </script>
 <script type="text/plain" id="starter-11">
 // The mini page has: <p id="status"> and <button id="bell">
 // Look at it in the Page tab below.
-
+ 
 // 1. Find the button and the status text
-
-
+ 
+ 
 // 2. Listen for a click on the button
-
-
+ 
+ 
 // 3. Change the status text to "Order up!"
-
+ 
 </script>
 <script type="text/plain" id="starter-12">
 // The mini page has:
 //   three <button class="add" data-name="..." data-price="..."> buttons
 //   <ul id="order">, <p id="total">Total: ₹0</p> and <button id="clear">
 // Look at it in the Page tab below.
-
+ 
 let order = [];
-
+ 
 function render() {
   // Draw one <li> per item in #order, and show "Total: ₹..." in #total
 }
-
+ 
 // Listen for clicks on every .add button
-
-
+ 
+ 
 // Listen for a click on #clear
-
-
+ 
+ 
 render();
 </script>
-
+ 
 <script>
 (() => {
 "use strict";
-
+ 
 /* ───────────── Test helpers ───────────── */
 class Friendly extends Error {}
-
+ 
 const call = (ex, fn, ...args) => {
   if (typeof ex[fn] !== "function") throw new Friendly(`${fn} isn’t a function yet. Write: function ${fn}(...) { ... }`);
   return ex[fn](...args);
@@ -411,7 +411,7 @@ const val = (ex, name) => {
   return ex[name];
 };
 const stripComments = code => code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
-
+ 
 // A test: checks one thing, says what it expected and what it got.
 const eq = (name, get, expected) => ({ name, run: (ex, ctx) => {
   const got = get(ex, ctx);
@@ -419,7 +419,7 @@ const eq = (name, get, expected) => ({ name, run: (ex, ctx) => {
 }});
 const ok = (name, check, why) => ({ name, run: (ex, ctx, code) => ({ pass: !!check(ex, ctx, code), why: typeof why === "function" ? why(ex, ctx) : why }) });
 const uses = (name, re, why) => ({ name, run: (ex, ctx, code) => ({ pass: re.test(stripComments(code)), why }) });
-
+ 
 function same(a, b) {
   if (a === b) return true;
   if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((x, i) => same(x, b[i]));
@@ -437,13 +437,13 @@ function fmt(v, inConsole) {
   }
   return String(v);
 }
-
+ 
 // DOM test helpers (they run inside a fresh copy of the mini page)
 const $ = (ctx, sel) => ctx.doc.querySelector(sel);
 const $$ = (ctx, sel) => ctx.doc.querySelectorAll(sel);
 const text = (ctx, sel) => { const el = $(ctx, sel); return el ? el.textContent.trim() : null; };
 const click = (ctx, sel, i = 0) => { const el = $$(ctx, sel)[i]; if (!el) throw new Friendly(`The page has no ${sel}`); el.click(); if (ctx.errors.length) throw new Friendly("Your click code crashed: " + ctx.errors[0]); };
-
+ 
 /* ───────────── The levels ───────────── */
 const LEVELS = [
   { id: 1, title: "Name the canteen", concept: "const and let", xp: 100,
@@ -462,7 +462,7 @@ const LEVELS = [
       eq("openTill is now the number 5", ex => val(ex, "openTill"), 5),
       uses("You changed openTill after creating it", /\bopenTill\s*=\s*5\b/, "Give it a new value on its own line: openTill = 5;"),
     ] },
-
+ 
   { id: 2, title: "Light up the board", concept: "Template strings", xp: 100,
     story: "The board can show text again. It needs a welcome message, built from the two values it already has.",
     task: `<p>Change the <code>welcome</code> line so it says exactly:</p>
@@ -476,7 +476,7 @@ const LEVELS = [
       uses("It uses ${name}", /\$\{\s*name\s*\}/, "Put ${name} where the canteen name goes."),
       uses("It uses ${hour}", /\$\{\s*hour\s*\}/, "Put ${hour} where the 4 goes."),
     ] },
-
+ 
   { id: 3, title: "The ₹6020 bill", concept: "Types and Number()", xp: 100,
     story: "A student bought a ₹60 dosa and a ₹20 coffee. The till asked for ₹6020. They are not happy.",
     task: `<p>Run the code first and look at the console. Then fix the <code>total</code> line so <code>total</code> is the number <code>80</code>.</p>
@@ -489,7 +489,7 @@ const LEVELS = [
       eq("coffee is still 20", ex => val(ex, "coffee"), 20),
       uses("total is worked out from price and coffee", /total\s*=[^;\n]*price[^;\n]*coffee|total\s*=[^;\n]*coffee[^;\n]*price/, "Work it out from price and coffee. Don’t just write 80."),
     ] },
-
+ 
   { id: 4, title: "How busy is it?", concept: "if / else if / else", xp: 100,
     story: "The queue screen should warn people before they walk over.",
     task: `<p>Finish <code>rushLevel(people)</code> so it <strong>returns</strong>:</p>
@@ -504,7 +504,7 @@ const LEVELS = [
       eq("0 people → \"Quiet\"", ex => call(ex, "rushLevel", 0), "Quiet"),
       eq("200 people → \"Packed\"", ex => call(ex, "rushLevel", 200), "Packed"),
     ] },
-
+ 
   { id: 5, title: "Bug hunt: free coffee", concept: "=== and debugging", xp: 100,
     story: "Coffee is free on Fridays. But the till says every day is Friday, and the canteen is losing money.",
     task: `<p>Run it and read the console. Find the bug and fix it, so only <code>"Friday"</code> gives <code>true</code>.</p>`,
@@ -516,7 +516,7 @@ const LEVELS = [
       eq("\"Saturday\" → false", ex => call(ex, "isFreeCoffeeDay", "Saturday"), false),
       uses("It compares with ===", /day\s*===\s*["']Friday["']|["']Friday["']\s*===\s*day/, "Compare with === inside the if."),
     ] },
-
+ 
   { id: 6, title: "Print the order slip", concept: "Functions and defaults", xp: 100,
     story: "The kitchen printer needs one line per order: how many, and what.",
     task: `<p>Write a function <code>orderSlip(dish, qty)</code> that <strong>returns</strong> text like <code>"2 x Masala dosa"</code>.</p>
@@ -529,7 +529,7 @@ const LEVELS = [
       eq("orderSlip(\"Vada\") uses 1", ex => call(ex, "orderSlip", "Vada"), "1 x Vada"),
       ok("It returns the text (not just logs it)", ex => typeof call(ex, "orderSlip", "Vada", 1) === "string", "Use return, not console.log, inside the function."),
     ] },
-
+ 
   { id: 7, title: "Add up the bill", concept: "Arrays and loops", xp: 100,
     story: "The till can see every price in an order. It still can’t add.",
     task: `<p>Finish <code>billTotal(prices)</code> so it returns the sum of every number in the array. An empty order costs <code>0</code>.</p>`,
@@ -542,7 +542,7 @@ const LEVELS = [
       eq("[] → 0", ex => call(ex, "billTotal", []), 0),
       eq("[60, 40, 30, 20, 50, 45] → 245", ex => call(ex, "billTotal", [60, 40, 30, 20, 50, 45]), 245),
     ] },
-
+ 
   { id: 8, title: "Student budget", concept: "Loops, if and push", xp: 100,
     story: "It’s the end of the month. Students want to see only what they can afford.",
     task: `<p>Finish <code>under(prices, budget)</code>. It returns a <strong>new</strong> array with only the prices that are <strong>less than or equal to</strong> the budget, in the same order.</p>`,
@@ -554,7 +554,7 @@ const LEVELS = [
       eq("Budget 10 → []", ex => call(ex, "under", [60, 40, 30], 10), []),
       ok("The original array is not changed", ex => { const p = [60, 40, 30]; call(ex, "under", p, 40); return same(p, [60, 40, 30]); }, "Make a new array. Don’t push into, or remove from, prices."),
     ] },
-
+ 
   { id: 9, title: "Write the menu card", concept: "Objects", xp: 100,
     story: "Each dish is stored as an object. The menu card needs one neat line per dish.",
     task: `<p>Finish <code>menuLine(dish)</code> so it returns:</p>
@@ -568,7 +568,7 @@ const LEVELS = [
       eq("Chicken roll (non-veg)", ex => call(ex, "menuLine", { name: "Chicken roll", price: 70, veg: false }), "Chicken roll - Rs.70 - Non-veg"),
       eq("Curd rice (veg)", ex => call(ex, "menuLine", { name: "Curd rice", price: 45, veg: true }), "Curd rice - Rs.45 - Veg"),
     ] },
-
+ 
   { id: 10, title: "Find the dish", concept: "Arrays of objects", xp: 100,
     story: "Someone types a dish name at the counter. The till needs to find it on the menu, or say it isn’t there.",
     task: `<p>Finish <code>findDish(menu, name)</code>. It returns the dish <strong>object</strong> whose <code>name</code> matches, or <code>null</code> if no dish matches.</p>`,
@@ -581,7 +581,7 @@ const LEVELS = [
       eq("Finds the first dish too", ex => { const d = call(ex, "findDish", testMenu(), "Masala dosa"); return d ? d.name : d; }, "Masala dosa"),
       eq("\"Pizza\" → null", ex => call(ex, "findDish", testMenu(), "Pizza"), null),
     ] },
-
+ 
   { id: 11, title: "Ring the bell", concept: "The DOM", xp: 100,
     story: "The counter has a bell button. When the cook presses it, the screen should say the order is ready.",
     task: `<p>Open the <strong>Page</strong> tab to see the mini page. When <code>#bell</code> is clicked, change the text of <code>#status</code> to <code>Order up!</code></p>
@@ -594,7 +594,7 @@ const LEVELS = [
       eq("After a click, it says Order up!", (ex, ctx) => { click(ctx, "#bell"); return text(ctx, "#status"); }, "Order up!"),
       eq("A second click still works", (ex, ctx) => { click(ctx, "#bell"); return text(ctx, "#status"); }, "Order up!"),
     ] },
-
+ 
   { id: 12, title: "Boss: the mini canteen", concept: "Everything", xp: 300, boss: true,
     story: "The last job: the whole order screen. Every skill from today, in one page.",
     task: `<p>Make the mini page work:</p>
@@ -628,26 +628,26 @@ const MINI_CSS = `body{font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-se
 h1,h2{margin:0 0 8px;font-size:1.25rem}p{margin:6px 0}.row{display:flex;gap:8px;flex-wrap:wrap}
 button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:8px 14px;cursor:pointer;background:#1e8e5e;color:#fff;margin:2px 0}
 #clear{background:#14213d}ul{margin:8px 0;padding-left:20px}#status{font-weight:700;font-size:1.1rem}`;
-
+ 
 const RANKS = [[0, "Kitchen helper"], [300, "Line cook"], [700, "Sous chef"], [1100, "Head chef"], [1400, "Canteen hero"]];
-
+ 
 /* ───────────── Saved progress ───────────── */
 const KEY = "canteen-quest-v1";
 let state = { solved: {}, skipped: {}, code: {}, fails: {}, cur: 1 };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.solved) state = Object.assign(state, s); } catch {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
-
+ 
 const starter = id => document.getElementById("starter-" + id).textContent.replace(/^\n/, "");
 const level = id => LEVELS.find(l => l.id === id);
 const unlocked = id => id === 1 || state.solved[id] || state.skipped[id] || state.solved[id - 1] || state.skipped[id - 1];
 const xp = () => LEVELS.reduce((s, l) => s + (state.solved[l.id] ? l.xp : 0), 0);
 const rank = n => RANKS.filter(r => n >= r[0]).pop()[1];
-
+ 
 /* ───────────── Elements ───────────── */
 const el = id => document.getElementById(id);
 const $code = el("code"), $hl = el("hl"), $gutter = el("gutter"), $console = el("console"), $brief = el("brief");
 const $preview = el("preview"), $pagePane = el("pagePane"), $tabPage = el("tabPage"), $tabConsole = el("tabConsole");
-
+ 
 /* ───────────── Editor ───────────── */
 const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 function highlight(src) {
@@ -704,7 +704,7 @@ $code.addEventListener("keydown", e => {
     }
   }
 });
-
+ 
 /* ───────────── Running code ───────────── */
 // Stops a loop that never ends, instead of freezing the page.
 function addLoopGuards(code) {
@@ -752,7 +752,7 @@ function loadFrame(frame, html) {
     frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>${MINI_CSS}</style></head><body>${html}</body></html>`;
   });
 }
-
+ 
 function log(kind, textLine) {
   const d = document.createElement("div");
   d.className = "ln" + (kind === "err" ? " err" : kind === "info" ? " info" : "");
@@ -760,7 +760,7 @@ function log(kind, textLine) {
   $console.append(d);
   $console.scrollTop = $console.scrollHeight;
 }
-
+ 
 let running = false;
 async function runLevel() {
   if (running) return;
@@ -772,7 +772,7 @@ async function runLevel() {
   showTab("console");
   const results = [];
   let crashed = null, ex = {};
-
+ 
   if (!lv.dom) {
     try { ex = runIn(window, code, lv.exports, log) || {}; }
     catch (e) { crashed = friendly(e); log("err", crashed); }
@@ -797,7 +797,7 @@ async function runLevel() {
     }
     if (!crashed) showTab("page");
   }
-
+ 
   const passed = !crashed && results.length && results.every(r => r.pass);
   if (!passed) { state.fails[lv.id] = (state.fails[lv.id] || 0) + 1; }
   if (!$console.children.length) log("info", crashed ? "" : "(nothing was logged)");
@@ -814,7 +814,7 @@ function check(t, ex, ctx, code) {
     return { name: t.name, pass: false, why: friendly(e) };
   }
 }
-
+ 
 /* ───────────── Rendering ───────────── */
 function renderLevels() {
   const nav = el("levels");
@@ -835,7 +835,7 @@ function renderLevels() {
   el("xp").textContent = n;
   el("rank").textContent = rank(n);
 }
-
+ 
 function renderBrief(results, crashed) {
   const lv = level(state.cur);
   const done = state.solved[lv.id];
@@ -870,7 +870,7 @@ function renderBrief(results, crashed) {
   el("toFinale")?.addEventListener("click", showFinale);
   el("skip")?.addEventListener("click", () => { state.skipped[lv.id] = true; save(); openLevel(lv.id + 1); });
 }
-
+ 
 async function openLevel(id) {
   if (!unlocked(id)) return;
   state.cur = id; save();
@@ -888,7 +888,7 @@ async function openLevel(id) {
   renderBrief(null, null);
   window.scrollTo({ top: 0 });
 }
-
+ 
 function showTab(which) {
   const page = which === "page" && !$tabPage.hidden;
   $tabConsole.setAttribute("aria-selected", String(!page));
@@ -898,7 +898,7 @@ function showTab(which) {
 }
 $tabConsole.addEventListener("click", () => showTab("console"));
 $tabPage.addEventListener("click", () => showTab("page"));
-
+ 
 el("run").addEventListener("click", runLevel);
 el("resetCode").addEventListener("click", () => {
   $code.value = starter(state.cur);
@@ -914,7 +914,7 @@ el("resetAll").addEventListener("click", e => {
   armed = false; b.textContent = "Start over"; b.classList.remove("warn");
   openLevel(1);
 });
-
+ 
 /* ───────────── Celebration ───────────── */
 function celebrate(lv) {
   const first = !state.solved[lv.id];
@@ -940,7 +940,7 @@ function showFinale() {
   el("finClose").focus();
 }
 el("finClose").addEventListener("click", () => { el("finale").hidden = true; });
-
+ 
 function confetti(count) {
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const c = el("confetti"), g = c.getContext("2d");
@@ -961,7 +961,7 @@ function confetti(count) {
     if (++t < 110) requestAnimationFrame(frame); else g.clearRect(0, 0, c.width, c.height);
   })();
 }
-
+ 
 /* ───────────── Start ───────────── */
 if (!unlocked(state.cur)) state.cur = 1;
 openLevel(state.cur);
