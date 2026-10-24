@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Vault of Block C</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Special+Elite&display=swap">
+<style>
+/* The Vault of Block C: a heist dossier on a dark desk.
+   Layout: header (team, clock, collected letters), stage strip, then the dossier (left) and the workbench (right). */
+:root {
+  --desk: #14161b;
+  --desk-2: #1c1f26;
+  --desk-3: #262a33;
+  --paper: #efe5cc;
+  --paper-2: #e3d5b2;
+  --paper-line: #cdbb92;
+  --ink: #2a2317;
+  --ink-dim: #6a5c44;
+  --stamp: #b3261e;
+  --amber: #e7a93c;
+  --mint: #7fd8a4;
+  --rose: #ff8f7f;
+  --steel: #9fb3c8;
+  --code-bg: #0e1014;
+  --code-2: #13161c;
+
+  --f-type: "Special Elite", "Courier New", Courier, monospace;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-code: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  min-height: 100vh; background: radial-gradient(1000px 600px at 70% -10%, #1f232c, transparent 60%), var(--desk);
+  color: #e8e4da; font-family: var(--f-body); font-size: 16px; line-height: 1.5;
+}
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+[hidden] { display: none !important; }
+code { font-family: var(--f-code); font-size: .86em; }
+
+/* header */
+.bar { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between;
+  padding: 14px max(18px, env(safe-area-inset-left)); border-bottom: 1px solid var(--desk-3); background: rgba(0,0,0,.25); }
+.brand h1 { margin: 0; font-family: var(--f-type); font-weight: 400; font-size: 1.75rem; letter-spacing: .02em; line-height: 1.1; }
+.brand p { margin: 2px 0 0; color: #a49c8a; font-size: .88rem; }
+.hud { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.team { font-family: var(--f-type); font-size: 1.05rem; color: var(--amber); }
+.clock { font: 700 1.5rem/1 var(--f-code); font-variant-numeric: tabular-nums; background: #000; color: var(--mint); padding: 6px 12px; border-radius: 6px; letter-spacing: .04em; }
+.clock small { font-size: .7rem; color: var(--rose); margin-left: 6px; font-weight: 600; }
+.letters { display: flex; gap: 4px; }
+.letters span { width: 26px; height: 32px; border-radius: 4px; background: var(--desk-3); display: grid; place-items: center;
+  font: 700 1rem var(--f-code); color: #555c6a; border: 1px solid #343944; }
+.letters span.got { background: var(--paper); color: var(--ink); border-color: var(--paper); animation: flip .5s ease-out; }
+@keyframes flip { from { transform: rotateY(90deg); } to { transform: none; } }
+
+/* stage strip */
+#stages { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px max(18px, env(safe-area-inset-left)) 2px; max-width: 1440px; margin: 0 auto; align-items: center; }
+.st { min-width: 44px; height: 40px; border-radius: 8px; border: 1.5px solid var(--desk-3); background: var(--desk-2); color: #9aa2b1; font: 700 .95rem var(--f-code); padding: 0 10px; }
+.st:hover:not(:disabled) { border-color: var(--steel); color: #fff; }
+.st.done { background: #183326; border-color: #2f6b4b; color: var(--mint); }
+.st.now { border-color: var(--amber); color: #fff; box-shadow: 0 0 0 3px rgba(231,169,60,.25); }
+.st:disabled { opacity: .35; cursor: not-allowed; }
+.st.vault { font-family: var(--f-type); font-weight: 400; letter-spacing: .04em; }
+
+/* layout */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 14px max(18px, env(safe-area-inset-left)) 40px; max-width: 1440px; margin: 0 auto; }
+@media (min-width: 1080px) { .grid { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; } }
+
+/* dossier */
+.dossier { position: relative; background: var(--paper); color: var(--ink); border-radius: 4px 14px 14px 14px; padding: 26px 28px 24px; min-width: 0;
+  box-shadow: 0 18px 40px rgba(0,0,0,.45), inset 0 0 80px rgba(120,90,30,.12); }
+.dossier::before { content: ""; position: absolute; top: -14px; left: 0; width: 140px; height: 16px; background: var(--paper); border-radius: 8px 8px 0 0; }
+.file-no { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-family: var(--f-type); color: var(--ink-dim); font-size: .95rem; }
+.tag { font-family: var(--f-body); font-weight: 700; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; border: 1.5px solid var(--ink-dim); border-radius: 4px; padding: 1px 7px; }
+.dossier h2 { font-family: var(--f-type); font-weight: 400; font-size: 2.1rem; line-height: 1.1; margin: 8px 0 8px; text-wrap: balance; }
+.story { font-style: italic; color: var(--ink-dim); margin: 0 0 14px; }
+.task { border-top: 1px dashed var(--paper-line); border-bottom: 1px dashed var(--paper-line); padding: 12px 0; margin-bottom: 14px; }
+.task p { margin: 0 0 8px; } .task p:last-child { margin: 0; }
+.task ul, .task ol { margin: 4px 0 8px; padding-left: 22px; } .task li { margin: 2px 0; }
+.dossier code { background: rgba(42,35,23,.08); padding: 1px 5px; border-radius: 4px; color: #4b2f0e; }
+.stamp { position: absolute; right: 24px; top: 26px; font-family: var(--f-type); font-size: 1.6rem; color: var(--stamp); border: 3px solid var(--stamp);
+  padding: 2px 12px; border-radius: 6px; transform: rotate(-9deg); opacity: .85; letter-spacing: .08em; }
+.stamp.fresh { animation: stamp .35s cubic-bezier(.3,1.6,.6,1); }
+@keyframes stamp { from { transform: rotate(-9deg) scale(2.2); opacity: 0; } to { transform: rotate(-9deg) scale(1); opacity: .85; } }
+
+.data h3, .hints h3 { font-family: var(--f-type); font-weight: 400; font-size: 1.15rem; margin: 0 0 6px; }
+.data { margin-bottom: 14px; }
+.var { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; background: var(--paper-2); border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; }
+.var b { font-family: var(--f-code); font-size: .92rem; }
+.var span { color: var(--ink-dim); font-size: .85rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--f-code); }
+.var button { border: 1.5px solid var(--ink-dim); background: transparent; color: var(--ink); border-radius: 6px; font-size: .8rem; padding: 3px 9px; }
+.var button:hover { background: rgba(42,35,23,.08); }
+.data .note { font-size: .85rem; color: var(--ink-dim); margin: 4px 0 0; }
+
+.hints { margin-bottom: 16px; }
+.hint { margin-bottom: 6px; }
+.hint button { border: 1.5px dashed var(--ink-dim); background: transparent; color: var(--ink); border-radius: 8px; padding: 5px 12px; font-size: .9rem; }
+.hint button.armed { border-style: solid; border-color: var(--stamp); color: var(--stamp); }
+.hint div { background: var(--paper-2); border-radius: 8px; padding: 9px 12px; font-size: .93rem; }
+.hint pre { margin: 6px 0 0; font: .82rem/1.5 var(--f-code); white-space: pre-wrap; color: #3b2d17; }
+
+.answer { background: #2a2317; color: var(--paper); border-radius: 10px; padding: 14px 16px; }
+.answer label { display: block; font-family: var(--f-type); font-size: 1.05rem; margin-bottom: 8px; }
+.answer .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.answer input { flex: 1; min-width: 0; font: 600 1.05rem var(--f-code); padding: 10px 12px; border-radius: 8px; border: 2px solid #4a3f2c; background: #13100a; color: #fff; text-transform: uppercase; }
+.answer input::placeholder { text-transform: none; color: #7a6d55; font-weight: 400; }
+.answer .go { background: var(--amber); color: #1b1408; border: 0; border-radius: 8px; padding: 10px 18px; font-weight: 700; }
+.answer .fb { min-height: 1.4em; margin: 8px 0 0; font-size: .92rem; }
+.answer .fb.bad { color: var(--rose); } .answer .fb.good { color: var(--mint); }
+.shake { animation: shake .35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.cracked { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.cracked .big { font: 700 2.2rem var(--f-code); background: var(--paper); color: var(--ink); width: 52px; height: 60px; display: grid; place-items: center; border-radius: 8px; }
+.next { background: var(--mint); color: #0d2417; border: 0; border-radius: 8px; padding: 10px 18px; font-weight: 700; }
+
+/* workbench */
+.bench { background: var(--desk-2); border: 1px solid var(--desk-3); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.benchbar { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; color: #9aa2b1; font-size: .85rem; }
+.benchbar b { font-family: var(--f-code); color: #e8e4da; font-weight: 600; }
+.editor { display: grid; grid-template-columns: 46px minmax(0, 1fr); background: var(--code-bg); border-radius: 10px; border: 1px solid #000; height: 380px; overflow: hidden; }
+.gutter { font: 14px/1.6 var(--f-code); color: #4a5262; text-align: right; padding: 14px 10px 14px 0; overflow: hidden; user-select: none; background: var(--code-2); white-space: pre; }
+.code-wrap { position: relative; min-width: 0; }
+.code-wrap textarea, .code-wrap pre { position: absolute; inset: 0; margin: 0; border: 0; padding: 14px 16px; font: 14px/1.6 var(--f-code); tab-size: 2; white-space: pre; overflow: auto; letter-spacing: 0; }
+.code-wrap pre { pointer-events: none; color: #e6e2d8; scrollbar-width: none; }
+.code-wrap pre::-webkit-scrollbar { display: none; }
+.code-wrap textarea { background: transparent; color: transparent; caret-color: var(--amber); resize: none; outline: none; }
+.code-wrap textarea::selection { background: rgba(159,179,200,.3); color: transparent; }
+.t-s { color: #f1c97a; } .t-k { color: #8fc2f0; font-weight: 600; } .t-n { color: #f39bb0; } .t-c { color: #6c7686; font-style: italic; } .t-f { color: #a9e2bd; } .t-d { color: var(--amber); text-decoration: underline dotted; }
+.tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.run { background: var(--amber); color: #1b1408; border: 0; border-radius: 10px; padding: 11px 20px; font-weight: 700; box-shadow: 0 3px 0 #a77418; }
+.run:active { transform: translateY(2px); box-shadow: 0 1px 0 #a77418; }
+.run kbd { font: 600 .72rem var(--f-code); background: rgba(0,0,0,.12); border-radius: 4px; padding: 1px 5px; margin-left: 6px; }
+.sec { background: transparent; color: #a8b0be; border: 1.5px solid var(--desk-3); border-radius: 10px; padding: 9px 14px; }
+.sec:hover { color: #fff; border-color: #4a5262; }
+.console { background: var(--code-bg); border-radius: 10px; border: 1px solid #000; font: 13.5px/1.55 var(--f-code); padding: 10px 14px; height: 210px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.console .ln { border-bottom: 1px solid rgba(255,255,255,.04); padding: 2px 0; }
+.console .err { color: var(--rose); } .console .info { color: #6c7686; font-style: italic; }
+
+/* start + finale overlays */
+.overlay { position: fixed; inset: 0; background: rgba(6,7,9,.9); display: grid; place-items: center; padding: 20px; z-index: 50; overflow: auto; }
+.sheet { width: 100%; max-width: 620px; background: var(--paper); color: var(--ink); border-radius: 6px 16px 16px 16px; padding: 30px 32px; box-shadow: 0 24px 70px rgba(0,0,0,.6); position: relative; }
+.sheet h2 { font-family: var(--f-type); font-weight: 400; font-size: 2.3rem; margin: 0 0 4px; line-height: 1.05; }
+.sheet .classified { font-family: var(--f-type); color: var(--stamp); letter-spacing: .2em; font-size: .9rem; }
+.sheet ul { padding-left: 20px; } .sheet li { margin: 4px 0; }
+.sheet label { display: block; font-weight: 700; margin: 14px 0 6px; }
+.sheet input { width: 100%; font: 600 1.1rem var(--f-body); padding: 10px 12px; border-radius: 8px; border: 2px solid var(--paper-line); background: #fffaf0; color: var(--ink); }
+.sheet .start { margin-top: 16px; background: var(--ink); color: var(--paper); border: 0; border-radius: 10px; padding: 12px 22px; font-weight: 700; font-size: 1.05rem; }
+.sheet .small { font-size: .85rem; color: var(--ink-dim); }
+.result { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
+.result div { background: var(--paper-2); border-radius: 10px; padding: 10px 12px; }
+.result b { display: block; font: 700 1.5rem var(--f-code); font-variant-numeric: tabular-nums; }
+.result span { font-size: .82rem; color: var(--ink-dim); }
+.door { width: 120px; height: 120px; margin: 0 auto 10px; border-radius: 50%; border: 10px solid #8b7a55; background: radial-gradient(circle, #cbb88a 0 20%, #a8956a 21% 40%, #8b7a55 41%); position: relative; }
+.door::after { content: ""; position: absolute; inset: 38px; border: 6px solid #5a4e34; border-radius: 50%; }
+.door.open { animation: spin 1.4s ease-in-out forwards; }
+@keyframes spin { to { transform: rotate(540deg) scale(.95); } }
+.footer { text-align: center; color: #5d6472; font-size: .8rem; padding: 0 0 24px; }
+.footer button { background: none; border: 0; color: #5d6472; text-decoration: underline; font-size: .8rem; }
+.footer button.armed { color: var(--rose); }
+@media (max-width: 600px) { .dossier h2 { font-size: 1.7rem; } .result { grid-template-columns: 1fr; } .editor { height: 320px; } .stamp { position: static; display: inline-block; margin-bottom: 8px; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <h1>The Vault of Block C</h1>
+    <p>A JavaScript heist · 10 locks · 1 vault</p>
+  </div>
+  <div class="hud">
+    <span class="team" id="teamName"></span>
+    <div class="letters" id="letters" aria-label="Letters collected"></div>
+    <div class="clock" id="clock" aria-label="Time">00:00</div>
+  </div>
+</header>
+
+<nav id="stages" aria-label="Stages"></nav>
+
+<main class="grid">
+  <section class="dossier" id="dossier" aria-live="polite"></section>
+  <section class="bench" id="bench">
+    <div class="benchbar"><span>Your code · <b id="fname">stage-1.js</b></span><span>The data for this stage is already loaded. Saved automatically.</span></div>
+    <div class="editor">
+      <div class="gutter" id="gutter" aria-hidden="true">1</div>
+      <div class="code-wrap">
+        <pre id="hl" aria-hidden="true"></pre>
+        <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Your code"></textarea>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="run" id="run" type="button">Run code<kbd>Ctrl + Enter</kbd></button>
+      <button class="sec" id="clearConsole" type="button">Clear console</button>
+      <button class="sec" id="resetCode" type="button">Reset code</button>
+    </div>
+    <div class="console" id="console" role="log"></div>
+  </section>
+</main>
+
+<p class="footer">For the instructor: <button type="button" id="wipe">reset this laptop</button></p>
+
+<div class="overlay" id="start" hidden>
+  <div class="sheet">
+    <div class="classified">CLASSIFIED · TEAM BRIEFING</div>
+    <h2>The Vault of Block C</h2>
+    <p>Last night, the canteen’s secret recipe was locked in the old vault under Block C. The vault has <b>10 locks</b>. Each lock opens with a password hidden in a pile of data far too big to search by hand.</p>
+    <ul>
+      <li>Write JavaScript to find each password, then type it in to crack the lock.</li>
+      <li>Every lock you crack gives you one <b>letter</b>. All 10 letters open the vault.</li>
+      <li>The clock is running. A <b>wrong answer adds 30 seconds</b>. A <b>hint adds 2 minutes</b>.</li>
+      <li>No AI tools. Talk to your teammates, read your errors, use the console.</li>
+    </ul>
+    <label for="teamInput">Team name</label>
+    <input id="teamInput" maxlength="40" placeholder="e.g. The Null Pointers" autocomplete="off">
+    <button class="start" id="startBtn" type="button">Start the heist</button>
+    <p class="small">The clock starts when you press the button, and keeps running if you refresh.</p>
+  </div>
+</div>
+
+<div class="overlay" id="finale" hidden>
+  <div class="sheet" style="text-align:center">
+    <div class="door" id="door"></div>
+    <div class="classified">VAULT OPEN</div>
+    <h2>The recipe is yours.</h2>
+    <p>The secret ingredient of the canteen’s dosa was <b>JavaScript</b> all along.</p>
+    <div class="result">
+      <div><b id="rTime">00:00</b><span>Final time (with penalties)</span></div>
+      <div><b id="rHints">0</b><span>Hints used</span></div>
+      <div><b id="rWrong">0</b><span>Wrong answers</span></div>
+    </div>
+    <p id="rTeam" style="font-family:var(--f-type);font-size:1.3rem"></p>
+    <p class="small">Raise your hand and show this screen to your instructor.</p>
+    <button class="start" id="closeFinale" type="button">Back to the stages</button>
+  </div>
+</div>
+
+<!-- Starter code for each stage. The data is passed in as variables. -->
+<script type="text/plain" id="starter-1">
+// The note is in: message
+console.log(message);
+console.log(message.length);
+
+// Take every 3rd character, starting from the first (positions 0, 3, 6, ...)
+
+</script>
+<script type="text/plain" id="starter-2">
+// The guestbook is in: guestbook
+console.log(guestbook.length);
+
+// Count how many entries are exactly "Priya"
+
+</script>
+<script type="text/plain" id="starter-3">
+// The bills are in: bills
+console.log(bills.length);
+
+// Add up every bill that is OVER 150
+
+</script>
+<script type="text/plain" id="starter-4">
+// The price tags are in: priceTags
+console.log(priceTags[0], typeof priceTags[0]);
+
+// Add up all the prices, as numbers
+
+</script>
+<script type="text/plain" id="starter-5">
+// The students are in: students
+console.log(students[0]);
+
+// Find the student in Block "C" with the highest marks
+
+</script>
+<script type="text/plain" id="starter-6">
+// The words are in: words
+console.log(words);
+
+// Take the first letter of every word with exactly 5 letters
+
+</script>
+<script type="text/plain" id="starter-7">
+// The coded message is in: secret
+// The key is in: key   (key["u"] gives you the real letter for "u")
+console.log(secret);
+console.log(key["u"]);
+
+// Decode the message, one character at a time. Spaces stay as spaces.
+
+</script>
+<script type="text/plain" id="starter-8">
+// The maze is in: maze   (an array of 12 strings)
+// The moves are in: moves
+console.log(maze[0]);       // the top row
+console.log(maze[0][0]);    // the letter at row 0, column 0
+console.log(moves);
+
+let row = 0;
+let col = 0;
+
+// Follow every move. On "!", pick up the letter at maze[row][col]
+
+</script>
+<script type="text/plain" id="starter-9">
+// No data this time: you have to search for the number yourself.
+
+function isLock(n) {
+  // return true if n is divisible by 17, divisible by 23, and even
+}
+
+// Start just above 5000 and keep going until isLock says true
+
+</script>
+<script type="text/plain" id="starter-10">
+// The logs are in: logs
+console.log(logs.length);
+console.log(logs[0]);
+
+// Who went into the "vault" after 21:00 (time > 2100) and never came "out"?
+
+</script>
+
+<script>
+(() => {
+"use strict";
+const PACK = {"data":{"message":"TKTHSXEPUFWGIPTRVPSKMTHFPIOACWSCNSLBWSIOXIREDDDGIVCSLMSZGAEHMDPBTZAQARPQ","guestbook":["Fatima","Divya","Rahul","Kavya","Aditya","Siddharth","Vikram","Siddharth","Nikhil","Diya","Varun","Rahul","Fatima","Priya ","Karthik","Imran","Manoj","Kavya","Karthik","Arjun","Varun","Fatima","Kavya","Kavya","Sneha","Imran","Siddharth","Aditya","Priya","Manoj","Sneha","Fatima","Karthik","Ananya","Sneha","Diya","Priya","Siddharth","Lakshmi","Harsha","Lakshmi","Pooja","PRIYA","Kavya","Rohan","Rohan","Meera","Lakshmi","Ritika","Siddharth","Arjun","Vikram","Rohan","Harsha","Aditya","Aditya","Varun","Lakshmi","Fatima","Siddharth","Divya","Imran","Priya ","Ritika","Siddharth","Meera","Divya","Meera","Kavya","Ananya","Divya","Kavya","Imran","Fatima","Diya","Rohan","Lakshmi","Siddharth","Isha","Imran","priya"," Priya","Sneha","Rahul","Priya","Siddharth","Neha","Harsha","Harsha","Rahul","Manoj","Pooja","Ritika","Neha","Kavya","Manoj","Manoj","Fatima","Imran","Vikram","Ananya","Manoj","Ananya","Lakshmi","Harsha","Siddharth","priya","Meera","Pooja","Imran","Diya","Imran","Manoj","Kavya","Aditya","Lakshmi","Harsha","Arjun","Rahul","Arjun","Ritika","Vikram","Karthik","Harsha","Imran","Harsha","Pooja","Vikram","Ritika","Rahul","Ananya","Pooja","Varun","Fatima","Arjun","Neha","Karthik","Priya ","Neha","Lakshmi","Manoj","Lakshmi","Siddharth","Kavya","Imran","Siddharth","Arjun","Neha","Vikram","Fatima","Aditya","Manoj","Priyanka","Varun","Meera","Arjun","Divya","Ritika","Siddharth","Priyaa","Rohan","Nikhil","Fatima","Priya","Meera","Divya","Arjun","Siddharth","Arjun","Nikhil","Isha","Aditya","Vikram","Aditya","Rohan","Meera","Sneha","Sneha","Isha","Ritika","Isha","Ritika","Priyanka","Harsha","Nikhil","priya","Neha","Sneha","Vikram","Manoj","PRIYA","Arjun","Karthik","Harsha","Lakshmi","Lakshmi","Arjun","Siddharth","Harsha"," Priya","Varun","Rahul","Pooja","Diya","Harsha","Aditya","Harsha","Isha","Varun","Aditya","Arjun","Ananya","Karthik","Siddharth","Rahul","Harsha","Nikhil","Nikhil","Priyaa","Varun","Imran","Diya","Lakshmi","Pooja","Neha","Diya","Priya","Karthik","Kavya","Isha","Diya","Aditya","Priya","Diya","Meera","Pooja","Karthik","Nikhil","Fatima","Ananya","Harsha","Sneha","Ritika","Meera","Priya","Priya","Neha","Meera","Priya","Pooja","Vikram","Ananya","Nikhil","Kavya","Aditya","Nikhil","Nikhil","Priya","Isha","Sneha","Rahul","Vikram","Fatima","Aditya","Rohan","Rahul","Lakshmi","Karthik","Neha","Pooja","Siddharth","Imran","Pooja","Karthik","Manoj","Manoj","Aditya","Neha","Isha","Harsha","Manoj","Divya","Priya","Kavya","Varun","Ananya","Siddharth","Kavya","Ananya","Imran","Divya","Vikram","Kavya","Meera","Aditya","Ananya","Siddharth","Nikhil","Harsha","Vikram","Arjun","Manoj","Rahul","Rahul","Isha","Imran","Vikram","Karthik","Neha","Fatima","Kavya","Imran","Kavya","Harsha"],"bills":[294,241,382,202,294,221,202,355,381,325,111,46,300,372,176,316,254,300,217,262,357,375,400,390,78,156,245,79,32,396,386,63,109,386,258,241,127,364,187,166,150,122,31,240,240,195,345,118,83,290,248,245,306,348,25,185,323,210,239,223,310,207,362,213,169,220,168,262,202,58,384,124,106,57,313,132,161,368,133,158,286,340,47,255,282,81,174,76,177,210,205,219,368,261,333,182,171,23,283,26,279,312,343,396,85,256,246,247,349,234,167,269,165,245,249,85,325,392,144,388,150,103,141,60,75,346,262,252,354,102,26,273,155,332,174,226,195,95,35,229,330,97,388,224,369,195,276,63,291,57,20,369,360,297,169,92,317,281,327,377,120,31,52,87,347,100,187,24,210,248,291,151,61,189,341,300,325,25,159,69,210,123,135,174,342,221,199,60,224,84,398,133,76,280,83,37,103,199,167,58,151,396,295,395,309,198,215,208,281,342,250,116,347,27,136,166,388,82,144,315,385,391,257,278,62,367,101,221,258,289,345,266,85,394,50,174,122,209,106,175,96,35,47,252,55,386,305,92,253,332,216,207,321],"priceTags":["70","20","90","25","120","20","40","20","80","40","50","25","45","60","35","120","70","70","120","80","80","45","60","60","80","70","30","80","35","50","80","45","70","70","45","60","35","45","20","80","40","30","25","40","35","45","120","120","20","80","80","80","25","25","70","40","35","35","70","45","30","30","30","35","30","40","20","80","50","40","90","40","60","120","30","90","20","80","25","50","80","45","80","90","50","120","80","70","80","70","80","20","20","50","120","45","120","20","50","60","20","35","50","30","30","80","35","50","45","80","90","35","25","90","20","120","25","90","120","25","70","35","70","40","20","40","70","80","35","40","45","40","80","80","70","120","35","120","80","90","50","60","60","60","70","120","50","25","40","60","70","90","35","40","25","35","30","60","60","25","50","20","25","80","20","60","35","90","45","50","120","80","60","60","70","40","80","30","50","25"],"students":[{"name":"Aditya Sharma","block":"D","marks":94},{"name":"Divya Rao","block":"B","marks":76},{"name":"Varun Reddy","block":"D","marks":83},{"name":"Lakshmi Kulkarni","block":"A","marks":72},{"name":"Rahul Gowda","block":"C","marks":84},{"name":"Imran Das","block":"B","marks":94},{"name":"Isha Iyer","block":"A","marks":44},{"name":"Rohan Iyer","block":"C","marks":52},{"name":"Harsha Das","block":"D","marks":58},{"name":"Pooja Shetty","block":"A","marks":75},{"name":"Rahul Joshi","block":"D","marks":70},{"name":"Karthik Kulkarni","block":"B","marks":79},{"name":"Rahul Shetty","block":"C","marks":75},{"name":"Priya Rao","block":"A","marks":73},{"name":"Pooja Patel","block":"B","marks":88},{"name":"Karthik Pillai","block":"C","marks":50},{"name":"Imran Nair","block":"B","marks":45},{"name":"Rohan Gowda","block":"C","marks":97},{"name":"Pooja Reddy","block":"D","marks":66},{"name":"Ananya Nair","block":"A","marks":59},{"name":"Divya Menon","block":"A","marks":64},{"name":"Divya Nair","block":"D","marks":68},{"name":"Varun Nair","block":"A","marks":71},{"name":"Rahul Pillai","block":"B","marks":84},{"name":"Neha Das","block":"D","marks":38},{"name":"Varun Kulkarni","block":"A","marks":49},{"name":"Sneha Kulkarni","block":"B","marks":52},{"name":"Manoj Joshi","block":"D","marks":48},{"name":"Priya Menon","block":"A","marks":65},{"name":"Arjun Reddy","block":"A","marks":99},{"name":"Fatima Das","block":"A","marks":74},{"name":"Ritika Patel","block":"A","marks":63},{"name":"Ananya Gowda","block":"C","marks":86},{"name":"Siddharth Das","block":"B","marks":53},{"name":"Isha Pillai","block":"A","marks":37},{"name":"Siddharth Hegde","block":"C","marks":94},{"name":"Lakshmi Gowda","block":"A","marks":62},{"name":"Rohan Kulkarni","block":"A","marks":39},{"name":"Fatima Kulkarni","block":"C","marks":64},{"name":"Aditya Pillai","block":"B","marks":42},{"name":"Harsha Gowda","block":"C","marks":49},{"name":"Pooja Kulkarni","block":"A","marks":47},{"name":"Rohan Pillai","block":"C","marks":54},{"name":"Harsha Reddy","block":"A","marks":87},{"name":"Karthik Patel","block":"A","marks":42},{"name":"Rahul Kulkarni","block":"D","marks":55},{"name":"Lakshmi Patel","block":"C","marks":61},{"name":"Aditya Joshi","block":"D","marks":73},{"name":"Imran Hegde","block":"B","marks":63},{"name":"Imran Joshi","block":"A","marks":90},{"name":"Isha Rao","block":"A","marks":71},{"name":"Aditya Nair","block":"A","marks":75},{"name":"Sneha Menon","block":"B","marks":46},{"name":"Arjun Hegde","block":"D","marks":68},{"name":"Meera Das","block":"C","marks":93},{"name":"Neha Pillai","block":"C","marks":43},{"name":"Rohan Shetty","block":"B","marks":42},{"name":"Pooja Hegde","block":"B","marks":53},{"name":"Sneha Iyer","block":"B","marks":78},{"name":"Arjun Sharma","block":"A","marks":77},{"name":"Ananya Iyer","block":"D","marks":74},{"name":"Diya Das","block":"B","marks":93},{"name":"Manoj Pillai","block":"A","marks":60},{"name":"Aditya Hegde","block":"B","marks":46},{"name":"Meera Menon","block":"A","marks":42},{"name":"Imran Shetty","block":"D","marks":74},{"name":"Diya Shetty","block":"B","marks":89},{"name":"Neha Gowda","block":"B","marks":37},{"name":"Vikram Joshi","block":"A","marks":39},{"name":"Neha Nair","block":"B","marks":71},{"name":"Ananya Rao","block":"D","marks":78},{"name":"Rahul Nair","block":"D","marks":45},{"name":"Rohan Sharma","block":"D","marks":78},{"name":"Isha Patel","block":"A","marks":48},{"name":"Kavya Joshi","block":"D","marks":94},{"name":"Fatima Rao","block":"C","marks":50},{"name":"Pooja Iyer","block":"B","marks":37},{"name":"Ananya Pillai","block":"B","marks":52},{"name":"Arjun Khan","block":"D","marks":73},{"name":"Manoj Menon","block":"A","marks":92},{"name":"Karthik Hegde","block":"D","marks":93},{"name":"Sneha Patel","block":"D","marks":57},{"name":"Harsha Sharma","block":"B","marks":82},{"name":"Manoj Shetty","block":"C","marks":66},{"name":"Isha Hegde","block":"B","marks":72},{"name":"Arjun Joshi","block":"A","marks":76},{"name":"Varun Rao","block":"D","marks":87},{"name":"Priya Pillai","block":"C","marks":79},{"name":"Ananya Menon","block":"C","marks":78},{"name":"Sneha Joshi","block":"B","marks":37},{"name":"Ritika Menon","block":"C","marks":46},{"name":"Divya Iyer","block":"A","marks":54},{"name":"Imran Reddy","block":"A","marks":44},{"name":"Aditya Patel","block":"D","marks":74},{"name":"Fatima Iyer","block":"D","marks":77},{"name":"Priya Reddy","block":"A","marks":67},{"name":"Priya Hegde","block":"A","marks":74},{"name":"Isha Reddy","block":"A","marks":64},{"name":"Kavya Patel","block":"C","marks":93},{"name":"Rahul Menon","block":"D","marks":40},{"name":"Harsha Menon","block":"A","marks":41},{"name":"Diya Menon","block":"D","marks":77},{"name":"Neha Kulkarni","block":"D","marks":71},{"name":"Rohan Das","block":"D","marks":47},{"name":"Fatima Joshi","block":"C","marks":50},{"name":"Imran Sharma","block":"C","marks":60},{"name":"Fatima Patel","block":"D","marks":90},{"name":"Karthik Menon","block":"D","marks":83},{"name":"Vikram Pillai","block":"B","marks":92},{"name":"Rohan Rao","block":"A","marks":79},{"name":"Neha Menon","block":"C","marks":65},{"name":"Priya Iyer","block":"C","marks":72},{"name":"Karthik Reddy","block":"B","marks":83},{"name":"Divya Pillai","block":"C","marks":50},{"name":"Lakshmi Pillai","block":"A","marks":35},{"name":"Ritika Iyer","block":"D","marks":54},{"name":"Arjun Gowda","block":"A","marks":37},{"name":"Arjun Rao","block":"A","marks":74},{"name":"Nikhil Das","block":"B","marks":87},{"name":"Manoj Das","block":"A","marks":90}],"words":["pongal","sambar","idli","sambar","chutneys","curry","masala","rice","chutneys","honey","pongal","pongal","coffee","payasam","idli","ultra","masala","ghee","rice","thali","puri","coffee","pickle","kesari","naans","kesari","upma","puri","elbow","coffee","ghee","idli","upma","yeast","pickle","ghee","poha"],"secret":"yvvg gfv kmma ig gfv nika hmml ieh xfsbovl libiy","key":{"a":"k","b":"s","c":"z","d":"y","e":"n","f":"h","g":"t","h":"d","i":"a","j":"j","k":"c","l":"r","m":"o","n":"b","o":"p","p":"v","q":"l","r":"g","s":"i","t":"x","u":"f","v":"e","w":"q","x":"w","y":"m","z":"u"},"maze":["GLDBTVSCKBIQ","HDRDCAPJAOYE","FHPFGSMTOQAL","UZHAKSRWQIZZ","DQOXLDGMQQRR","TYAYMCAIKZCD","RGSEVMEKIIPO","YELXWFEGBTSA","JUEVJQYWIFNP","HCMPKQCTMJPZ","QEPBSGCFLWLG","RLJRBATNEIPH"],"moves":"RLDDRRUD!DDDUUDD!LDRULURRD!UUDURDUL!DLRLURRRU!LRULDUDRU!DRRDUL!LRLULU","logs":[{"time":801,"name":"Arjun Shetty","room":"store room","action":"in"},{"time":805,"name":"Priya Gowda","room":"office","action":"in"},{"time":807,"name":"Arjun Shetty","room":"store room","action":"out"},{"time":808,"name":"Priya Gowda","room":"office","action":"out"},{"time":809,"name":"Rahul Patel","room":"staff room","action":"in"},{"time":817,"name":"Rahul Patel","room":"staff room","action":"out"},{"time":826,"name":"Fatima Shetty","room":"office","action":"in"},{"time":833,"name":"Manoj Menon","room":"office","action":"in"},{"time":833,"name":"Fatima Shetty","room":"office","action":"out"},{"time":837,"name":"Manoj Menon","room":"office","action":"out"},{"time":840,"name":"Ananya Hegde","room":"office","action":"in"},{"time":846,"name":"Ananya Hegde","room":"office","action":"out"},{"time":846,"name":"Fatima Nair","room":"office","action":"in"},{"time":849,"name":"Aditya Khan","room":"vault","action":"in"},{"time":849,"name":"Karthik Khan","room":"vault","action":"in"},{"time":851,"name":"Fatima Nair","room":"office","action":"out"},{"time":854,"name":"Karthik Khan","room":"vault","action":"out"},{"time":858,"name":"Aditya Khan","room":"vault","action":"out"},{"time":903,"name":"Rohan Sharma","room":"kitchen","action":"in"},{"time":904,"name":"Divya Das","room":"staff room","action":"in"},{"time":907,"name":"Divya Das","room":"kitchen","action":"in"},{"time":907,"name":"Divya Das","room":"staff room","action":"out"},{"time":909,"name":"Rohan Sharma","room":"kitchen","action":"out"},{"time":913,"name":"Divya Das","room":"kitchen","action":"out"},{"time":920,"name":"Rohan Sharma","room":"vault","action":"in"},{"time":924,"name":"Siddharth Shetty","room":"store room","action":"in"},{"time":925,"name":"Rohan Sharma","room":"vault","action":"out"},{"time":931,"name":"Aditya Reddy","room":"staff room","action":"in"},{"time":932,"name":"Siddharth Shetty","room":"store room","action":"out"},{"time":933,"name":"Aditya Reddy","room":"staff room","action":"out"},{"time":941,"name":"Rahul Gowda","room":"store room","action":"in"},{"time":941,"name":"Priya Reddy","room":"store room","action":"in"},{"time":946,"name":"Priya Reddy","room":"store room","action":"out"},{"time":949,"name":"Rahul Gowda","room":"store room","action":"out"},{"time":1006,"name":"Divya Das","room":"store room","action":"in"},{"time":1012,"name":"Divya Das","room":"store room","action":"out"},{"time":1018,"name":"Rahul Patel","room":"kitchen","action":"in"},{"time":1018,"name":"Varun Kulkarni","room":"vault","action":"in"},{"time":1021,"name":"Varun Kulkarni","room":"vault","action":"out"},{"time":1025,"name":"Rahul Patel","room":"kitchen","action":"out"},{"time":1048,"name":"Pooja Reddy","room":"staff room","action":"in"},{"time":1056,"name":"Pooja Reddy","room":"staff room","action":"out"},{"time":1121,"name":"Ananya Hegde","room":"store room","action":"in"},{"time":1127,"name":"Ritika Rao","room":"staff room","action":"in"},{"time":1129,"name":"Aditya Khan","room":"kitchen","action":"in"},{"time":1130,"name":"Ananya Hegde","room":"store room","action":"out"},{"time":1132,"name":"Ritika Rao","room":"staff room","action":"out"},{"time":1133,"name":"Aditya Khan","room":"kitchen","action":"out"},{"time":1141,"name":"Varun Rao","room":"vault","action":"in"},{"time":1144,"name":"Varun Rao","room":"vault","action":"out"},{"time":1203,"name":"Ritika Rao","room":"staff room","action":"in"},{"time":1205,"name":"Ritika Rao","room":"staff room","action":"out"},{"time":1208,"name":"Siddharth Shetty","room":"office","action":"in"},{"time":1213,"name":"Siddharth Shetty","room":"vault","action":"in"},{"time":1217,"name":"Siddharth Shetty","room":"office","action":"out"},{"time":1217,"name":"Varun Kulkarni","room":"office","action":"in"},{"time":1221,"name":"Siddharth Shetty","room":"vault","action":"out"},{"time":1221,"name":"Varun Kulkarni","room":"office","action":"out"},{"time":1245,"name":"Varun Kulkarni","room":"office","action":"in"},{"time":1253,"name":"Varun Kulkarni","room":"office","action":"out"},{"time":1306,"name":"Siddharth Shetty","room":"office","action":"in"},{"time":1308,"name":"Siddharth Shetty","room":"office","action":"out"},{"time":1312,"name":"Ritika Menon","room":"vault","action":"in"},{"time":1320,"name":"Ritika Menon","room":"vault","action":"out"},{"time":1322,"name":"Fatima Shetty","room":"store room","action":"in"},{"time":1326,"name":"Fatima Shetty","room":"store room","action":"out"},{"time":1338,"name":"Varun Rao","room":"staff room","action":"in"},{"time":1343,"name":"Varun Rao","room":"staff room","action":"out"},{"time":1400,"name":"Varun Hegde","room":"kitchen","action":"in"},{"time":1405,"name":"Priya Reddy","room":"kitchen","action":"in"},{"time":1408,"name":"Varun Hegde","room":"kitchen","action":"out"},{"time":1409,"name":"Neha Pillai","room":"kitchen","action":"in"},{"time":1410,"name":"Priya Reddy","room":"kitchen","action":"out"},{"time":1412,"name":"Neha Pillai","room":"kitchen","action":"out"},{"time":1434,"name":"Fatima Reddy","room":"kitchen","action":"in"},{"time":1436,"name":"Fatima Reddy","room":"kitchen","action":"out"},{"time":1442,"name":"Rahul Gowda","room":"kitchen","action":"in"},{"time":1449,"name":"Rahul Gowda","room":"kitchen","action":"out"},{"time":1502,"name":"Varun Rao","room":"office","action":"in"},{"time":1505,"name":"Varun Rao","room":"office","action":"out"},{"time":1509,"name":"Rahul Gowda","room":"staff room","action":"in"},{"time":1510,"name":"Fatima Nair","room":"staff room","action":"in"},{"time":1510,"name":"Pooja Das","room":"staff room","action":"in"},{"time":1512,"name":"Rahul Gowda","room":"staff room","action":"out"},{"time":1512,"name":"Pooja Das","room":"staff room","action":"out"},{"time":1514,"name":"Manoj Menon","room":"store room","action":"in"},{"time":1514,"name":"Fatima Nair","room":"staff room","action":"out"},{"time":1514,"name":"Varun Kulkarni","room":"store room","action":"in"},{"time":1517,"name":"Varun Kulkarni","room":"store room","action":"out"},{"time":1518,"name":"Manoj Menon","room":"store room","action":"out"},{"time":1523,"name":"Siddharth Shetty","room":"store room","action":"in"},{"time":1524,"name":"Fatima Reddy","room":"staff room","action":"in"},{"time":1529,"name":"Fatima Reddy","room":"staff room","action":"out"},{"time":1529,"name":"Siddharth Shetty","room":"store room","action":"out"},{"time":1532,"name":"Aditya Reddy","room":"staff room","action":"in"},{"time":1533,"name":"Varun Kulkarni","room":"store room","action":"in"},{"time":1534,"name":"Pooja Joshi","room":"staff room","action":"in"},{"time":1536,"name":"Aditya Reddy","room":"staff room","action":"out"},{"time":1537,"name":"Varun Rao","room":"office","action":"in"},{"time":1537,"name":"Varun Kulkarni","room":"store room","action":"out"},{"time":1542,"name":"Pooja Joshi","room":"staff room","action":"out"},{"time":1546,"name":"Varun Rao","room":"office","action":"out"},{"time":1547,"name":"Fatima Reddy","room":"kitchen","action":"in"},{"time":1550,"name":"Pooja Reddy","room":"staff room","action":"in"},{"time":1552,"name":"Fatima Reddy","room":"kitchen","action":"out"},{"time":1554,"name":"Pooja Reddy","room":"staff room","action":"out"},{"time":1627,"name":"Siddharth Shetty","room":"store room","action":"in"},{"time":1630,"name":"Siddharth Shetty","room":"store room","action":"out"},{"time":1648,"name":"Varun Hegde","room":"store room","action":"in"},{"time":1650,"name":"Varun Hegde","room":"vault","action":"in"},{"time":1653,"name":"Varun Hegde","room":"vault","action":"out"},{"time":1657,"name":"Varun Hegde","room":"store room","action":"out"},{"time":1702,"name":"Aditya Sharma","room":"staff room","action":"in"},{"time":1705,"name":"Aditya Sharma","room":"staff room","action":"out"},{"time":1737,"name":"Aditya Reddy","room":"store room","action":"in"},{"time":1744,"name":"Aditya Reddy","room":"store room","action":"out"},{"time":1802,"name":"Arjun Shetty","room":"kitchen","action":"in"},{"time":1808,"name":"Arjun Shetty","room":"kitchen","action":"out"},{"time":1808,"name":"Pooja Reddy","room":"office","action":"in"},{"time":1811,"name":"Pooja Reddy","room":"office","action":"out"},{"time":1811,"name":"Ritika Rao","room":"office","action":"in"},{"time":1816,"name":"Ritika Rao","room":"office","action":"out"},{"time":1819,"name":"Ritika Rao","room":"store room","action":"in"},{"time":1822,"name":"Divya Das","room":"store room","action":"in"},{"time":1827,"name":"Ritika Rao","room":"store room","action":"out"},{"time":1828,"name":"Divya Das","room":"store room","action":"out"},{"time":1829,"name":"Neha Pillai","room":"kitchen","action":"in"},{"time":1832,"name":"Ananya Hegde","room":"office","action":"in"},{"time":1833,"name":"Meera Sharma","room":"office","action":"in"},{"time":1833,"name":"Meera Sharma","room":"staff room","action":"in"},{"time":1836,"name":"Meera Sharma","room":"staff room","action":"out"},{"time":1837,"name":"Neha Pillai","room":"kitchen","action":"out"},{"time":1841,"name":"Ananya Hegde","room":"office","action":"out"},{"time":1842,"name":"Meera Sharma","room":"office","action":"out"},{"time":1842,"name":"Pooja Reddy","room":"staff room","action":"in"},{"time":1845,"name":"Varun Joshi","room":"vault","action":"in"},{"time":1850,"name":"Pooja Reddy","room":"staff room","action":"out"},{"time":1851,"name":"Varun Joshi","room":"vault","action":"out"},{"time":1901,"name":"Priya Gowda","room":"vault","action":"in"},{"time":1908,"name":"Varun Rao","room":"store room","action":"in"},{"time":1909,"name":"Priya Gowda","room":"vault","action":"out"},{"time":1914,"name":"Varun Rao","room":"store room","action":"out"},{"time":1915,"name":"Ritika Rao","room":"vault","action":"in"},{"time":1918,"name":"Ritika Rao","room":"vault","action":"out"},{"time":1919,"name":"Fatima Shetty","room":"vault","action":"in"},{"time":1923,"name":"Fatima Shetty","room":"vault","action":"out"},{"time":1937,"name":"Aditya Khan","room":"vault","action":"in"},{"time":1940,"name":"Aditya Khan","room":"vault","action":"out"},{"time":2010,"name":"Fatima Nair","room":"staff room","action":"in"},{"time":2012,"name":"Fatima Nair","room":"staff room","action":"out"},{"time":2014,"name":"Siddharth Shetty","room":"store room","action":"in"},{"time":2017,"name":"Siddharth Shetty","room":"store room","action":"out"},{"time":2019,"name":"Varun Kulkarni","room":"kitchen","action":"in"},{"time":2020,"name":"Fatima Shetty","room":"office","action":"in"},{"time":2021,"name":"Varun Kulkarni","room":"kitchen","action":"out"},{"time":2022,"name":"Fatima Shetty","room":"kitchen","action":"in"},{"time":2027,"name":"Fatima Shetty","room":"kitchen","action":"out"},{"time":2028,"name":"Fatima Nair","room":"vault","action":"in"},{"time":2029,"name":"Fatima Shetty","room":"office","action":"out"},{"time":2031,"name":"Fatima Nair","room":"vault","action":"out"},{"time":2033,"name":"Ananya Hegde","room":"store room","action":"in"},{"time":2035,"name":"Ananya Hegde","room":"store room","action":"out"},{"time":2038,"name":"Ananya Hegde","room":"staff room","action":"in"},{"time":2041,"name":"Vikram Menon","room":"vault","action":"in"},{"time":2042,"name":"Ananya Hegde","room":"staff room","action":"out"},{"time":2104,"name":"Varun Hegde","room":"staff room","action":"in"},{"time":2105,"name":"Varun Rao","room":"staff room","action":"in"},{"time":2112,"name":"Varun Rao","room":"staff room","action":"out"},{"time":2112,"name":"Varun Hegde","room":"staff room","action":"out"},{"time":2120,"name":"Pooja Joshi","room":"vault","action":"in"},{"time":2121,"name":"Meera Sharma","room":"vault","action":"in"},{"time":2122,"name":"Manoj Menon","room":"vault","action":"in"},{"time":2122,"name":"Varun Kulkarni","room":"vault","action":"in"},{"time":2124,"name":"Ananya Hegde","room":"staff room","action":"in"},{"time":2124,"name":"Aditya Khan","room":"vault","action":"in"},{"time":2126,"name":"Ananya Hegde","room":"staff room","action":"out"},{"time":2126,"name":"Meera Sharma","room":"vault","action":"out"},{"time":2127,"name":"Meera Menon","room":"staff room","action":"in"},{"time":2127,"name":"Pooja Joshi","room":"vault","action":"out"},{"time":2129,"name":"Aditya Khan","room":"vault","action":"out"},{"time":2131,"name":"Meera Menon","room":"staff room","action":"out"},{"time":2131,"name":"Karthik Khan","room":"vault","action":"in"},{"time":2132,"name":"Manoj Menon","room":"vault","action":"out"},{"time":2134,"name":"Varun Kulkarni","room":"vault","action":"out"},{"time":2138,"name":"Karthik Khan","room":"vault","action":"out"},{"time":2145,"name":"Siddharth Shetty","room":"kitchen","action":"in"},{"time":2150,"name":"Karthik Khan","room":"kitchen","action":"in"},{"time":2153,"name":"Karthik Khan","room":"kitchen","action":"out"},{"time":2154,"name":"Siddharth Shetty","room":"kitchen","action":"out"},{"time":2207,"name":"Ritika Menon","room":"vault","action":"in"},{"time":2217,"name":"Karthik Khan","room":"store room","action":"in"},{"time":2222,"name":"Karthik Khan","room":"store room","action":"out"},{"time":2224,"name":"Pooja Das","room":"kitchen","action":"in"},{"time":2231,"name":"Pooja Das","room":"kitchen","action":"out"},{"time":2239,"name":"Fatima Reddy","room":"office","action":"in"},{"time":2240,"name":"Manoj Menon","room":"store room","action":"in"},{"time":2241,"name":"Fatima Reddy","room":"office","action":"out"},{"time":2247,"name":"Ananya Hegde","room":"office","action":"in"},{"time":2249,"name":"Manoj Menon","room":"store room","action":"out"},{"time":2256,"name":"Ananya Hegde","room":"office","action":"out"}]},"hashes":{"1":"2srxabc6m4","2":"d3qpb2lyxi","3":"1g2o0rdmxng","4":"2b6s0fyx2jy","5":"8dih2ao3vp","6":"11nvm9vucnw","7":"db8hnaj2cx","8":"30lsksvhdu","9":"k6s6ci8by7","10":"m9bnmtyzhk","11":"1upn08ca7qs"}};
+const DATA = PACK.data, HASHES = PACK.hashes;
+
+const STAGES = [
+  { id: 1, title: "The scrambled note", concept: "Strings and loops", letter: "P", vars: ["message"],
+    story: "A note was slipped under the canteen door. It looks like nonsense, but every third letter is real.",
+    task: `<p>The note is in <code>message</code>. Starting from the very first character, take every 3rd one: positions 0, 3, 6, 9 and so on.</p><p>They spell a sentence with no spaces. <b>The password is its last word.</b></p>`,
+    hints: [
+      `<p><code>message[0]</code> is the first character, and <code>message.length</code> is how many there are. The remainder operator <code>%</code> tells you if a position is a multiple of 3: <code>6 % 3</code> is <code>0</code>.</p>`,
+      `<pre>let result = "";\nlet position = 0;\nfor (const ch of message) {\n  if (position % 3 === 0) {\n    result = result + ch;\n  }\n  position = position + 1;\n}\nconsole.log(result);</pre>` ] },
+
+  { id: 2, title: "The guestbook", concept: "Loops and ===", letter: "A", vars: ["guestbook"],
+    story: "Everyone who visited the canteen yesterday signed the guestbook. The vault guard’s name is Priya, and the lock wants to know how often she came by.",
+    task: `<p><code>guestbook</code> is an array of names. <b>The password is how many entries are exactly <code>"Priya"</code>.</b></p><p>Not <code>"priya"</code>, not <code>"Priyanka"</code>, not <code>" Priya"</code> with a space. Exactly.</p>`,
+    hints: [
+      `<p>Start a counter at 0. Loop over the guestbook, and add 1 every time a name <code>===</code> "Priya".</p>`,
+      `<pre>let count = 0;\nfor (const name of guestbook) {\n  if (name === "Priya") {\n    count = count + 1;\n  }\n}\nconsole.log(count);</pre>` ] },
+
+  { id: 3, title: "Big spenders", concept: "if inside a loop", letter: "J", vars: ["bills"],
+    story: "The till keeps every bill from yesterday. The thief paid with big notes.",
+    task: `<p><code>bills</code> is an array of amounts in rupees. <b>The password is the total of every bill that is over ₹150.</b></p><p>A bill of exactly 150 does not count.</p>`,
+    hints: [
+      `<p>Over 150 means <code>&gt; 150</code>, not <code>&gt;= 150</code>.</p>`,
+      `<pre>let total = 0;\nfor (const bill of bills) {\n  if (bill > 150) {\n    total = total + bill;\n  }\n}\nconsole.log(total);</pre>` ] },
+
+  { id: 4, title: "The price tag problem", concept: "Types and Number()", letter: "T", vars: ["priceTags"],
+    story: "The store room’s price tags were scanned from the shelves. The scanner gives back text, not numbers.",
+    task: `<p><code>priceTags</code> is an array like <code>["45", "120", ...]</code>. <b>The password is the total of all the prices.</b></p><p>If your total is a very long number, you’ve seen this trap before.</p>`,
+    hints: [
+      `<p><code>"45" + "120"</code> is <code>"45120"</code>. Turn each tag into a number with <code>Number(tag)</code> before adding.</p>`,
+      `<pre>let total = 0;\nfor (const tag of priceTags) {\n  total = total + Number(tag);\n}\nconsole.log(total);</pre>` ] },
+
+  { id: 5, title: "Top of Block C", concept: "Objects", letter: "S", vars: ["students"],
+    story: "Only the top student in Block C was given a key to the vault corridor.",
+    task: `<p><code>students</code> is an array of objects like <code>{ name, block, marks }</code>. <b>The password is the full name of the student in Block <code>"C"</code> with the highest marks.</b></p><p>Careful: the highest marks overall are <em>not</em> in Block C.</p>`,
+    hints: [
+      `<p>Keep track of the best student so far. Only look at students whose <code>block === "C"</code>.</p>`,
+      `<pre>let best = null;\nfor (const s of students) {\n  if (s.block === "C") {\n    if (best === null || s.marks > best.marks) {\n      best = s;\n    }\n  }\n}\nconsole.log(best);</pre>` ] },
+
+  { id: 6, title: "The hidden word", concept: "String length and letters", letter: "I", vars: ["words"],
+    story: "The menu board was rewritten overnight. Someone hid a word in it.",
+    task: `<p><code>words</code> is an array of words. Take the <b>first letter</b> of every word that has <b>exactly 5 letters</b>, in order. <b>Together they spell the password.</b></p>`,
+    hints: [
+      `<p><code>word.length</code> is how many letters it has, and <code>word[0]</code> is its first letter.</p>`,
+      `<pre>let hidden = "";\nfor (const word of words) {\n  if (word.length === 5) {\n    hidden = hidden + word[0];\n  }\n}\nconsole.log(hidden);</pre>` ] },
+
+  { id: 7, title: "The secret alphabet", concept: "Objects as a lookup", letter: "A", vars: ["secret", "key"],
+    story: "The cook writes notes in a secret alphabet. We found the key taped under the counter.",
+    task: `<p><code>secret</code> is a coded message. <code>key</code> is an object: <code>key["u"]</code> gives the real letter for the coded letter <code>"u"</code>. Spaces stay as spaces.</p><p>Decode the whole message. <b>The password is its last word.</b></p>`,
+    hints: [
+      `<p>Loop over every character of <code>secret</code>. If it’s a space, add a space. Otherwise add <code>key[ch]</code>.</p>`,
+      `<pre>let plain = "";\nfor (const ch of secret) {\n  if (ch === " ") {\n    plain = plain + " ";\n  } else {\n    plain = plain + key[ch];\n  }\n}\nconsole.log(plain);</pre>` ] },
+
+  { id: 8, title: "The letter maze", concept: "Grids and directions", letter: "C", vars: ["maze", "moves"],
+    story: "A cleaning robot crossed the vault’s tiled floor and picked up letter tiles on the way. Its route was logged.",
+    task: `<p><code>maze</code> is an array of 12 strings: <code>maze[row][col]</code> is one letter. The robot starts at the top-left: <code>row 0</code>, <code>col 0</code>.</p>
+      <p>Follow <code>moves</code>, one character at a time:</p>
+      <ul><li><code>R</code> right (col + 1), <code>L</code> left (col − 1)</li><li><code>D</code> down (row + 1), <code>U</code> up (row − 1)</li><li><code>!</code> pick up the letter where the robot is standing</li></ul>
+      <p><b>The letters it picks up spell the password.</b> The robot never leaves the maze.</p>`,
+    hints: [
+      `<p>Inside a <code>for...of</code> over <code>moves</code>, use <code>if</code> / <code>else if</code> for each letter. Only <code>!</code> reads the maze.</p>`,
+      `<pre>let picked = "";\nfor (const m of moves) {\n  if (m === "R") col = col + 1;\n  else if (m === "L") col = col - 1;\n  else if (m === "D") row = row + 1;\n  else if (m === "U") row = row - 1;\n  else if (m === "!") picked = picked + maze[row][col];\n}\nconsole.log(picked);</pre>` ] },
+
+  { id: 9, title: "The lock number", concept: "Functions and %", letter: "V", vars: [],
+    story: "The vault door has a number dial. A note beside it gives the rule, but not the number.",
+    task: `<p><b>The password is the first number greater than 5000 that is:</b></p><ul><li>divisible by 17,</li><li>divisible by 23,</li><li>and even.</li></ul><p>Write <code>isLock(n)</code> first, then search.</p>`,
+    hints: [
+      `<p>“Divisible by 17” means <code>n % 17 === 0</code>. Even means <code>n % 2 === 0</code>. Join conditions with <code>&amp;&amp;</code>.</p>`,
+      `<pre>function isLock(n) {\n  return n % 17 === 0 && n % 23 === 0 && n % 2 === 0;\n}\n\nlet n = 5001;\nwhile (isLock(n) === false) {\n  n = n + 1;\n}\nconsole.log(n);</pre>` ] },
+
+  { id: 10, title: "Who’s still in the vault?", concept: "Everything", letter: "R", vars: ["logs"],
+    story: "Every door in the canteen logs who goes in and out. The recipe vanished after 21:00, and the thief is still inside.",
+    task: `<p><code>logs</code> is an array of entries like <code>{ time: 2134, name, room, action }</code>. <code>2134</code> means 21:34, and <code>action</code> is <code>"in"</code> or <code>"out"</code>.</p>
+      <p><b>The password is the name of the person who went into the <code>"vault"</code> after 21:00 and never came out.</b></p>
+      <p>Careful: one person went in <em>before</em> 21:00 and the log never shows them coming out. That’s not who we want.</p>`,
+    hints: [
+      `<p>For every <code>"in"</code> to the vault after 2100, look through the logs again for an <code>"out"</code> from the vault by the same name, at a later time. If there isn’t one, that’s your thief.</p>`,
+      `<pre>for (const e of logs) {\n  if (e.room === "vault" && e.action === "in" && e.time > 2100) {\n    let cameOut = false;\n    for (const f of logs) {\n      if (f.name === e.name && f.room === "vault" && f.action === "out" && f.time > e.time) {\n        cameOut = true;\n      }\n    }\n    if (cameOut === false) {\n      console.log(e.name);\n    }\n  }\n}</pre>` ] },
+
+  { id: 11, title: "The vault", concept: "The final door", vars: [], final: true,
+    story: "Ten locks are open. The last door has no keyhole, only ten letter slots.",
+    task: `<p>You have collected ten letters. <b>Unscramble them to spell the canteen’s secret ingredient.</b></p><p>A clue: you have been using it all day.</p>`,
+    hints: [`<p>It’s a programming language. Ten letters, and it starts with J.</p>`] },
+];
+const LOCKS = STAGES.filter(s => !s.final);
+
+/* ───────── checking answers (hashed, so the source doesn't give them away) ───────── */
+function cyrb53(str, seed = 0) {
+  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0, ch; i < str.length; i++) { ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507); h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507); h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+const norm = s => String(s).replace(/[₹,"']/g, "").trim().toLowerCase().replace(/\s+/g, " ");
+const isRight = (id, guess) => cyrb53("blockc-" + id + ":" + norm(guess)) === HASHES[id];
+
+/* ───────── saved progress ───────── */
+const KEY = "vault-of-block-c-v1";
+const fresh = () => ({ team: "", start: 0, penalty: 0, solved: {}, hints: {}, wrong: 0, hintCount: 0, code: {}, cur: 1, finishedAt: 0 });
+let S = fresh();
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.solved) S = Object.assign(fresh(), s); } catch {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+
+const el = id => document.getElementById(id);
+const stage = id => STAGES.find(s => s.id === id);
+const lettersGot = () => LOCKS.filter(s => S.solved[s.id]).length;
+const unlocked = id => id === 1 || !!S.solved[id - 1] || !!S.solved[id];
+const allLocks = () => LOCKS.every(s => S.solved[s.id]);
+const starter = id => { const n = el("starter-" + id); return n ? n.textContent.replace(/^\n/, "") : "// Nothing to code here: look at your ten letters.\n"; };
+
+/* ───────── clock ───────── */
+function elapsed() {
+  if (!S.start) return 0;
+  const end = S.finishedAt || Date.now();
+  return Math.floor((end - S.start) / 1000) + S.penalty;
+}
+const mmss = t => { const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = t % 60; return (h ? h + ":" + String(m).padStart(2, "0") : String(m).padStart(2, "0")) + ":" + String(s).padStart(2, "0"); };
+function tick() {
+  el("clock").innerHTML = mmss(elapsed()) + (S.penalty ? `<small>+${mmss(S.penalty)}</small>` : "");
+}
+setInterval(tick, 1000);
+
+/* ───────── editor ───────── */
+const $code = el("code"), $hl = el("hl"), $gutter = el("gutter"), $console = el("console");
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+let dataNames = [];
+function highlight(src) {
+  const re = /(\/\/.*$|\/\*[\s\S]*?\*\/)|("(?:[^"\\\n]|\\.)*"?|'(?:[^'\\\n]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|\b(const|let|var|function|return|if|else|for|of|in|while|true|false|null|undefined|new|typeof|break)\b|\b(\d+(?:\.\d+)?)\b|\b([A-Za-z_$][\w$]*)\b/gm;
+  let out = "", last = 0, m;
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    let cls = m[1] ? "t-c" : m[2] ? "t-s" : m[3] ? "t-k" : m[4] ? "t-n" : null;
+    if (!cls && m[5]) cls = dataNames.includes(m[5]) ? "t-d" : (/^\s*\(/.test(src.slice(re.lastIndex)) ? "t-f" : null);
+    out += cls ? `<span class="${cls}">${esc(m[0])}</span>` : esc(m[0]);
+    last = re.lastIndex;
+  }
+  return out + esc(src.slice(last)) + "\n ";
+}
+function paint() {
+  $hl.innerHTML = highlight($code.value);
+  $gutter.textContent = Array.from({ length: $code.value.split("\n").length }, (_, i) => i + 1).join("\n");
+  syncScroll();
+}
+function syncScroll() { $hl.scrollTop = $code.scrollTop; $hl.scrollLeft = $code.scrollLeft; $gutter.scrollTop = $code.scrollTop; }
+function insert(text) {
+  $code.focus();
+  if (!document.execCommand || !document.execCommand("insertText", false, text)) $code.setRangeText(text, $code.selectionStart, $code.selectionEnd, "end");
+  onEdit();
+}
+let saveTimer;
+function onEdit() { paint(); clearTimeout(saveTimer); saveTimer = setTimeout(() => { S.code[S.cur] = $code.value; save(); }, 250); }
+$code.addEventListener("input", onEdit);
+$code.addEventListener("scroll", syncScroll);
+$code.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); return; }
+  if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); insert("  "); return; }
+  if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+    const before = $code.value.slice(0, $code.selectionStart), line = before.slice(before.lastIndexOf("\n") + 1);
+    let indent = line.match(/^\s*/)[0]; if (/[{(\[]\s*$/.test(line)) indent += "  ";
+    e.preventDefault(); insert("\n" + indent); return;
+  }
+  if (e.key === "}") {
+    const before = $code.value.slice(0, $code.selectionStart), line = before.slice(before.lastIndexOf("\n") + 1);
+    if (/^\s{2,}$/.test(line)) { e.preventDefault(); $code.setSelectionRange($code.selectionStart - 2, $code.selectionStart); insert("}"); }
+  }
+});
+
+/* ───────── running code ───────── */
+class Friendly extends Error {}
+function addLoopGuards(code) {
+  let out = "", i = 0, m; const re = /\b(for|while)\s*\(/g;
+  while ((m = re.exec(code))) {
+    let j = re.lastIndex, depth = 1;
+    while (j < code.length && depth > 0) { if (code[j] === "(") depth++; else if (code[j] === ")") depth--; j++; }
+    let k = j; while (k < code.length && /\s/.test(code[k])) k++;
+    if (code[k] === "{") { out += code.slice(i, k + 1) + "__guard();"; i = k + 1; re.lastIndex = k + 1; }
+  }
+  return out + code.slice(i);
+}
+function fmt(v, top) {
+  if (typeof v === "string") return top ? v : JSON.stringify(v);
+  if (v === undefined) return "undefined";
+  if (v === null) return "null";
+  if (typeof v === "function") return `function ${v.name || ""}()`;
+  if (Array.isArray(v)) {
+    const shown = v.slice(0, 30).map(x => fmt(x)).join(", ");
+    return "[" + shown + (v.length > 30 ? `, … ${v.length - 30} more` : "") + "]" + (v.length > 30 ? `  (${v.length} items)` : "");
+  }
+  if (typeof v === "object") return "{ " + Object.entries(v).slice(0, 30).map(([k, x]) => `${k}: ${fmt(x)}`).join(", ") + (Object.keys(v).length > 30 ? ", …" : "") + " }";
+  return String(v);
+}
+function log(kind, text) {
+  const d = document.createElement("div"); d.className = "ln" + (kind === "err" ? " err" : kind === "info" ? " info" : "");
+  d.textContent = text; $console.append(d);
+  if ($console.children.length > 400) $console.firstChild.remove();
+  $console.scrollTop = $console.scrollHeight;
+}
+function friendly(e) {
+  if (e instanceof Friendly) return e.message;
+  const msg = String(e && e.message || e), name = (e && e.name) || "Error";
+  if (name === "SyntaxError") return `SyntaxError: ${msg}\n→ Check your brackets ( ) { } [ ], quotes and backticks.`;
+  if (/Assignment to constant/.test(msg)) return `TypeError: ${msg}\n→ A const can’t get a new value. Use let if it needs to change.`;
+  if (/already been declared/.test(msg)) return `SyntaxError: ${msg}\n→ That name is already used, maybe by the stage’s data. Pick another name.`;
+  if (name === "ReferenceError") return `ReferenceError: ${msg}\n→ Check the spelling and capitals, and that you created it with const or let first.`;
+  if (/Cannot read properties of undefined/.test(msg)) return `TypeError: ${msg}\n→ Something is undefined: maybe a position past the end, or a misspelled property.`;
+  return `${name}: ${msg}`;
+}
+function run() {
+  const st = stage(S.cur);
+  S.code[st.id] = $code.value; save();
+  log("info", `▶ Running stage-${st.id}.js`);
+  let n = 0;
+  const guard = () => { if (++n > 5000000) throw new Friendly("Your loop ran 5,000,000 times. Does it ever stop? Check the condition."); };
+  const w = kind => (...a) => log(kind, a.map(x => fmt(x, true)).join(" "));
+  const fakeConsole = { log: w("log"), info: w("log"), warn: w("log"), error: w("err"), table: w("log") };
+  const copies = st.vars.map(v => JSON.parse(JSON.stringify(DATA[v])));
+  try {
+    const fn = new Function("console", "__guard", ...st.vars, '"use strict";\n' + addLoopGuards($code.value));
+    fn(fakeConsole, guard, ...copies);
+  } catch (e) { log("err", friendly(e)); }
+}
+el("run").addEventListener("click", run);
+el("clearConsole").addEventListener("click", () => { $console.innerHTML = ""; });
+el("resetCode").addEventListener("click", () => { $code.value = starter(S.cur); onEdit(); });
+
+/* ───────── rendering ───────── */
+function renderTop() {
+  el("teamName").textContent = S.team ? "Team " + S.team : "";
+  const L = el("letters"); L.innerHTML = "";
+  for (const s of LOCKS) {
+    const sp = document.createElement("span");
+    sp.className = S.solved[s.id] ? "got" : "";
+    sp.textContent = S.solved[s.id] ? s.letter : "?";
+    sp.title = `Lock ${s.id}`;
+    L.append(sp);
+  }
+  const nav = el("stages"); nav.innerHTML = "";
+  for (const s of STAGES) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "st" + (s.final ? " vault" : "") + (S.solved[s.id] ? " done" : "") + (s.id === S.cur ? " now" : "");
+    b.textContent = s.final ? (S.solved[s.id] ? "VAULT ✓" : "VAULT") : (S.solved[s.id] ? "✓ " + s.id : String(s.id));
+    b.disabled = s.final ? !allLocks() : !unlocked(s.id);
+    b.title = s.final ? "The vault" : `Lock ${s.id}: ${s.title}`;
+    b.addEventListener("click", () => open(s.id));
+    nav.append(b);
+  }
+  tick();
+}
+
+function describe(v) {
+  const x = DATA[v];
+  if (Array.isArray(x)) return `array · ${x.length} items · ${fmt(x[0])}, ${fmt(x[1])}, …`;
+  if (typeof x === "string") return `text · ${x.length} characters · "${x.slice(0, 24)}…"`;
+  if (typeof x === "object") return `object · ${Object.keys(x).length} keys · ${Object.entries(x).slice(0, 3).map(([k, y]) => k + ": " + fmt(y)).join(", ")}, …`;
+  return typeof x;
+}
+
+function renderDossier(feedback) {
+  const st = stage(S.cur), done = !!S.solved[st.id];
+  const d = el("dossier");
+  const hintsUsed = S.hints[st.id] || 0;
+  const label = st.final ? "THE VAULT" : `LOCK ${st.id} OF 10`;
+  d.innerHTML = `
+    ${done ? `<div class="stamp${feedback === "just" ? " fresh" : ""}">CRACKED</div>` : ""}
+    <div class="file-no"><span>${label}</span><span class="tag">${st.concept}</span></div>
+    <h2>${st.title}</h2>
+    <p class="story">${st.story}</p>
+    <div class="task">${st.task}</div>
+    ${st.final ? `<div class="data"><h3>Your letters</h3><p style="font:700 2rem var(--f-code);letter-spacing:.35em;margin:4px 0 0">${LOCKS.map(s => s.letter).join(" ")}</p></div>` : ""}
+    ${st.vars.length ? `<div class="data"><h3>The data (already loaded in your code)</h3><div id="vars"></div>
+      <p class="note">Want to work in VS Code instead? Copy the data and paste it at the top of your own file.</p></div>` : ""}
+    <div class="hints"><h3>Hints</h3><div id="hintList"></div></div>
+    ${done ? `<div class="answer"><div class="cracked">${st.final ? "" : `<div class="big">${st.letter}</div>`}
+        <div><div style="font-family:var(--f-type);font-size:1.3rem">${st.final ? "The vault is open." : "Lock cracked. Letter collected."}</div>
+        <div style="color:#b9ab8a;font-size:.9rem">${st.final ? "Well done." : "Keep it safe: you need all ten."}</div></div>
+        ${st.final ? `<button class="next" type="button" id="showFinale">See your result</button>` : `<button class="next" type="button" id="toNext">${st.id === 10 ? "To the vault →" : "Next lock →"}</button>`}</div></div>`
+      : `<form class="answer" id="answerForm" autocomplete="off"><label for="guess">${st.final ? "The secret ingredient" : "Password for lock " + st.id}</label>
+        <div class="row"><input id="guess" placeholder="Type the answer you found" aria-describedby="fb"><button class="go" type="submit">Try it</button></div>
+        <p class="fb" id="fb" role="status"></p></form>`}`;
+
+  if (st.vars.length) {
+    const box = el("vars");
+    for (const v of st.vars) {
+      const row = document.createElement("div"); row.className = "var";
+      const b = document.createElement("b"); b.textContent = v;
+      const sp = document.createElement("span"); sp.textContent = describe(v);
+      const btn = document.createElement("button"); btn.type = "button"; btn.textContent = "Copy as code";
+      btn.addEventListener("click", () => copy(`const ${v} = ${JSON.stringify(DATA[v])};\n`, btn));
+      row.append(b, sp, btn); box.append(row);
+    }
+  }
+  const hl = el("hintList");
+  st.hints.forEach((h, i) => {
+    const wrap = document.createElement("div"); wrap.className = "hint";
+    if (i < hintsUsed || done) { const div = document.createElement("div"); div.innerHTML = `<b>Hint ${i + 1}.</b> ` + h; wrap.append(div); }
+    else if (i === hintsUsed) {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = `Show hint ${i + 1} (+2 min)`;
+      let armed = false;
+      b.addEventListener("click", () => {
+        if (!armed) { armed = true; b.classList.add("armed"); b.textContent = "Sure? Click again to add 2 minutes"; setTimeout(() => { if (armed) { armed = false; b.classList.remove("armed"); b.textContent = `Show hint ${i + 1} (+2 min)`; } }, 4000); return; }
+        S.hints[st.id] = hintsUsed + 1; S.hintCount++; S.penalty += 120; save(); renderDossier(); tick();
+      });
+      wrap.append(b);
+    }
+    hl.append(wrap);
+  });
+
+  el("toNext")?.addEventListener("click", () => open(st.id + 1));
+  el("showFinale")?.addEventListener("click", showFinale);
+  const form = el("answerForm");
+  if (form) {
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const g = el("guess").value;
+      if (!g.trim()) { el("fb").textContent = "Type an answer first."; el("fb").className = "fb bad"; return; }
+      if (isRight(st.id, g)) {
+        S.solved[st.id] = true;
+        if (st.final) S.finishedAt = Date.now();
+        save(); renderTop(); renderDossier("just");
+        if (st.final) setTimeout(showFinale, 500);
+      } else {
+        S.wrong++; S.penalty += 30; save(); tick();
+        const fb = el("fb"); fb.textContent = `“${g.trim()}” isn’t it. +30 seconds. Check your code, not your luck.`; fb.className = "fb bad";
+        form.classList.remove("shake"); void form.offsetWidth; form.classList.add("shake");
+      }
+    });
+    if (feedback !== "keep") setTimeout(() => { if (document.activeElement === document.body) el("guess")?.focus({ preventScroll: true }); }, 0);
+  }
+}
+
+function copy(text, btn) {
+  const done = () => { const t = btn.textContent; btn.textContent = "Copied!"; setTimeout(() => btn.textContent = t, 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => fallback());
+  else fallback();
+  function fallback() { const ta = document.createElement("textarea"); ta.value = text; document.body.append(ta); ta.select(); try { document.execCommand("copy"); done(); } catch {} ta.remove(); }
+}
+
+function open(id) {
+  const st = stage(id);
+  if (st.final ? !allLocks() : !unlocked(id)) return;
+  S.cur = id; save();
+  dataNames = st.vars;
+  el("bench").hidden = !!st.final;
+  if (!st.final) {
+    $code.value = S.code[id] ?? starter(id);
+    el("fname").textContent = `stage-${id}.js`;
+    paint(); $code.scrollTop = 0;
+    $console.innerHTML = "";
+    log("info", st.vars.length ? `Loaded: ${st.vars.join(", ")}. Press Run code (Ctrl + Enter).` : "Press Run code (Ctrl + Enter).");
+  }
+  renderTop(); renderDossier();
+  window.scrollTo({ top: 0 });
+}
+
+function showFinale() {
+  el("rTime").textContent = mmss(elapsed());
+  el("rHints").textContent = S.hintCount;
+  el("rWrong").textContent = S.wrong;
+  el("rTeam").textContent = "Team " + S.team;
+  el("finale").hidden = false;
+  const door = el("door"); door.classList.remove("open"); void door.offsetWidth; door.classList.add("open");
+}
+el("closeFinale").addEventListener("click", () => { el("finale").hidden = true; });
+
+/* ───────── start, and the instructor reset ───────── */
+function begin() {
+  const name = el("teamInput").value.trim();
+  if (!name) { el("teamInput").focus(); el("teamInput").placeholder = "Your team needs a name first"; return; }
+  S.team = name; S.start = Date.now(); save();
+  el("start").hidden = true;
+  open(1);
+}
+el("startBtn").addEventListener("click", begin);
+el("teamInput").addEventListener("keydown", e => { if (e.key === "Enter") begin(); });
+
+let wipeArmed = false;
+el("wipe").addEventListener("click", e => {
+  const b = e.currentTarget;
+  if (!wipeArmed) { wipeArmed = true; b.classList.add("armed"); b.textContent = "click again to erase this team’s progress and clock"; setTimeout(() => { wipeArmed = false; b.classList.remove("armed"); b.textContent = "reset this laptop"; }, 4000); return; }
+  S = fresh(); save(); location.reload();
+});
+
+if (!S.start) { el("start").hidden = false; renderTop(); open(1); el("teamInput").focus(); }
+else { open(stage(S.cur) && (stage(S.cur).final ? allLocks() : unlocked(S.cur)) ? S.cur : 1); }
+})();
+</script>
+</body>
+</html>
