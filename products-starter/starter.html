@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Names – Starter</title>
+
+  <!--
+    YOUR TASK
+    This page is plain HTML. The product names are typed out by hand.
+    Turn it into a React app where:
+      1. ProductList and ProductItem (marked below) are React components.
+      2. ProductItem gets the product name through a prop called "title".
+      3. The names come from this API instead of being typed by hand:
+         https://dummyjson.com/products?limit=10&select=title
+
+    Copy everything inside <style> into src/index.css in your React project.
+  -->
+
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #f4f5f7;
+      color: #1f2328;
+    }
+    h1 { margin: 0 0 16px; }
+    .product-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .product-item {
+      background: #ffffff;
+      border: 1px solid #dde1e6;
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Products</h1>
+
+  <!-- ============ COMPONENT: ProductList ============ -->
+  <ul class="product-list">
+
+    <!-- ============ COMPONENT: ProductItem (this line repeats) ============ -->
+    <!-- In React, the product name becomes a prop: {title} -->
+    <li class="product-item">Essence Mascara Lash Princess</li>
+
+    <!-- ProductItem again: same HTML, different name -->
+    <li class="product-item">Eyeshadow Palette with Mirror</li>
+
+    <!-- ProductItem again -->
+    <li class="product-item">Powder Canister</li>
+
+  </ul>
+
+</body>
+</html>
