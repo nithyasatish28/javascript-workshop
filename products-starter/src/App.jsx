@@ -1,5 +1,20 @@
+import { useState, useEffect } from "react";
+import ProductList from "./components/ProductList";
+
 function App() {
-  return <h1>Products</h1>;
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    fetch("https://dummyjson.com/products")
+      .then((response) => response.json())
+      .then((data) => setProducts(data.products));
+  }, []);
+
+  return (
+    <>
+      <ProductList products={products} />
+    </>
+  );
 }
 
 export default App;
