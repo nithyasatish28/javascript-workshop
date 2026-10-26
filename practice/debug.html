@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Broken Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a row of broken vault doors on top; below it, the brief on the left and the workbench (editor, console, checks) on the right */
+:root {
+  --bg: #e5e4e2;          /* worn steel */
+  --panel: #f6f5f3;
+  --panel-2: #edebe8;
+  --ink: #221f1c;
+  --muted: #5e5852;
+  --rule: #cbc6c0;
+  --copper: #9a4520;      /* repair copper, readable on light */
+  --copper-bright: #d0703f;
+  --copper-soft: #f5e1d4;
+  --ok: #2b7a4b;
+  --ok-soft: #dcefe3;
+  --bad: #b3261e;
+  --bad-soft: #f8e1df;
+  --editor-bg: #211e1c;   /* the editor and console stay dark in both themes, by choice */
+  --editor-ink: #ece8e4;
+  --editor-gutter: #7d746c;
+  --editor-sel: #4a3f37;
+  --console-err: #ff9b8f;
+  --console-dim: #a59c93;
+  --font-display: "Saira Stencil One", "Impact", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171513; --panel: #1f1c1a; --panel-2: #262220; --ink: #ece8e4; --muted: #a8a098; --rule: #36302c;
+    --copper: #ec9668; --copper-bright: #f0a274; --copper-soft: #3d2519;
+    --ok: #63c98f; --ok-soft: #173325; --bad: #ff8a80; --bad-soft: #3d1c1a;
+    --editor-bg: #110f0e; --editor-ink: #ece8e4; --editor-gutter: #6b625b; --editor-sel: #3d332c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171513; --panel: #1f1c1a; --panel-2: #262220; --ink: #ece8e4; --muted: #a8a098; --rule: #36302c;
+  --copper: #ec9668; --copper-bright: #f0a274; --copper-soft: #3d2519;
+  --ok: #63c98f; --ok-soft: #173325; --bad: #ff8a80; --bad-soft: #3d1c1a;
+  --editor-bg: #110f0e; --editor-ink: #ece8e4; --editor-gutter: #6b625b; --editor-sel: #3d332c;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 1.25rem 3rem;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--panel-2); border: 1px solid var(--rule); padding: 0 0.3em; border-radius: 4px; }
+:focus-visible { outline: 3px solid var(--copper-bright); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.75rem 1.5rem; }
+.brand { display: flex; flex-direction: column; gap: 0.15rem; }
+.brand h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 0.95; letter-spacing: 0.02em; text-transform: uppercase; }
+.brand p { color: var(--muted); }
+.tally { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; font-variant-numeric: tabular-nums; }
+.tally strong { font-family: var(--font-display); font-weight: 400; font-size: 1.6rem; color: var(--copper); }
+.bars { display: flex; gap: 3px; }
+.bars span { width: 14px; height: 8px; border-radius: 2px; background: var(--rule); }
+.bars span.on { background: var(--copper-bright); }
+
+.doors { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 0.4rem; }
+@media (max-width: 1100px) { .doors { grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); } }
+.door {
+  border: 2px solid var(--rule); background: var(--panel); color: var(--ink);
+  border-radius: 10px; padding: 0.5rem 0.3rem 0.55rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem; min-width: 0;
+}
+.door .dial {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--panel-2); border: 3px dashed var(--rule);
+  font-family: var(--font-display); font-size: 1.2rem; color: var(--muted);
+}
+.door .dname { font-size: 0.7rem; font-weight: 600; text-align: center; line-height: 1.2; color: var(--muted); overflow-wrap: anywhere; }
+.door .dstate { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.door[disabled] { cursor: not-allowed; opacity: 0.55; }
+.door.open .dial { border: 3px solid var(--copper-bright); color: var(--copper); background: var(--copper-soft); }
+.door.open .dstate { color: var(--ok); }
+.door.current { border-color: var(--copper-bright); box-shadow: 0 0 0 3px var(--copper-soft); }
+.door.current .dname { color: var(--ink); }
+.door:not([disabled]):hover { border-color: var(--copper); }
+.door.spin .dial { animation: spin 1.1s cubic-bezier(.5,0,.2,1); }
+@keyframes spin { 0% { transform: rotate(0); } 70% { transform: rotate(400deg); } 100% { transform: rotate(360deg); } }
+
+.main { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 1.25rem; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1.1rem 1.2rem; min-width: 0; }
+
+.brief { display: flex; flex-direction: column; gap: 0.9rem; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--copper); font-weight: 600; }
+.brief h2 { font-family: var(--font-display); font-weight: 400; font-size: 2rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.02em; }
+.story { color: var(--muted); font-style: italic; }
+.brief h3 { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.bugcount { display: inline-flex; align-items: center; gap: 0.4rem; align-self: flex-start; font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; color: var(--bad); background: var(--bad-soft); border-radius: 999px; padding: 0.15rem 0.7rem; }
+.examples { font-family: var(--font-mono); background: var(--panel-2); border: 1px dashed var(--rule); border-radius: 6px; padding: 0.5rem 0.7rem; font-size: 0.86rem; overflow-x: auto; white-space: pre; line-height: 1.7; }
+.examples .arrow { color: var(--muted); }
+.concepts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip { font-family: var(--font-mono); font-size: 0.78rem; border: 1px solid var(--rule); border-radius: 999px; padding: 0.1rem 0.6rem; background: var(--panel-2); }
+details.hint { border: 1px solid var(--rule); border-radius: 8px; background: var(--panel-2); padding: 0.5rem 0.75rem; }
+details.hint + details.hint { margin-top: 0.4rem; }
+details.hint summary { cursor: pointer; font-weight: 600; }
+details.hint p { margin-top: 0.4rem; }
+.note { font-size: 0.88rem; color: var(--muted); }
+
+.bench { display: flex; flex-direction: column; gap: 0.9rem; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: space-between; }
+.toolbar .right { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.filename { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); }
+.btn { border: 2px solid var(--ink); background: transparent; color: var(--ink); border-radius: 8px; padding: 0.4rem 0.9rem; font-weight: 700; }
+.btn:hover { background: var(--panel-2); }
+.btn.primary { background: var(--copper-bright); border-color: var(--copper-bright); color: #1f0f06; }
+.btn.primary:hover { filter: brightness(1.06); background: var(--copper-bright); }
+.btn.quiet { border-color: var(--rule); color: var(--muted); font-weight: 600; }
+.btn[disabled] { opacity: 0.5; cursor: wait; }
+.kbd { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+
+.editor {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  background: var(--editor-bg); color: var(--editor-ink);
+  border-radius: 10px; overflow: hidden; min-height: 280px; max-height: 60vh;
+  font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.6;
+}
+.gutter { padding: 0.75rem 0.5rem 0.75rem 0.75rem; text-align: right; color: var(--editor-gutter); user-select: none; overflow: hidden; white-space: pre; font-variant-numeric: tabular-nums; }
+.editor textarea {
+  font: inherit; color: inherit; background: transparent; border: 0; resize: none; outline: none;
+  padding: 0.75rem 0.9rem 0.75rem 0.4rem; width: 100%; min-height: 280px; max-height: 60vh;
+  white-space: pre; overflow: auto; tab-size: 2; caret-color: var(--copper-bright);
+}
+.editor textarea::selection { background: var(--editor-sel); }
+.editor:focus-within { box-shadow: 0 0 0 3px var(--copper-bright); }
+.editor-help { font-size: 0.8rem; color: var(--muted); }
+
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.9rem; }
+@media (max-width: 640px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.box { border: 1px solid var(--rule); border-radius: 10px; background: var(--panel); min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+.box-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.box-body { padding: 0.8rem; min-height: 150px; overflow-x: auto; }
+.console { background: var(--editor-bg); color: var(--editor-ink); font-family: var(--font-mono); font-size: 0.84rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.console .line { padding: 0.1rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.console .err { color: var(--console-err); }
+.console .dim { color: var(--console-dim); font-style: italic; }
+.console .cmd { color: var(--console-dim); }
+
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+.checks li { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); gap: 0.4rem; align-items: start; }
+.checks .lbl { font-family: var(--font-mono); font-size: 0.85rem; overflow-wrap: anywhere; }
+.mark { width: 1.3rem; height: 1.3rem; border-radius: 50%; display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; margin-top: 0.1rem; }
+.checks li.ok .mark { background: var(--ok-soft); color: var(--ok); }
+.checks li.bad .mark { background: var(--bad-soft); color: var(--bad); }
+.checks li.wait .mark { background: var(--panel-2); color: var(--muted); border: 1px solid var(--rule); }
+.checks .why { display: block; font-size: 0.86rem; color: var(--bad); margin-top: 0.1rem; overflow-wrap: anywhere; }
+.summary { font-weight: 700; }
+.errorbox { font-family: var(--font-mono); font-size: 0.82rem; white-space: pre-wrap; background: var(--bad-soft); color: var(--bad); border-radius: 8px; padding: 0.6rem 0.75rem; overflow-x: auto; }
+.muted { color: var(--muted); }
+
+.unlock { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; border: 2px solid var(--copper-bright); background: var(--copper-soft); border-radius: 12px; padding: 0.9rem 1.1rem; }
+.unlock .stamp { font-family: var(--font-display); font-size: clamp(1.4rem, 4vw, 2rem); text-transform: uppercase; color: var(--copper); line-height: 1; }
+.unlock.pop { animation: pop 0.5s ease-out; }
+@keyframes pop { 0% { transform: scale(0.96); opacity: 0.3; } 100% { transform: scale(1); opacity: 1; } }
+
+.finale { display: flex; flex-direction: column; gap: 0.7rem; border: 2px solid var(--copper-bright); }
+.finale h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 5vw, 2.6rem); text-transform: uppercase; color: var(--copper); line-height: 1; }
+.skills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+footer { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rule); padding-top: 0.9rem; }
+.confirm { display: inline-flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .door.spin .dial, .unlock.pop { animation: none; }
+}
+.offscreen { position: absolute; left: -10000px; top: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">JavaScript debugging game</span>
+      <h1>The Broken Vault</h1>
+      <p>Every vault's code is broken. Find the bug, fix it, and the vault opens.</p>
+    </div>
+    <div class="tally" aria-live="polite">
+      <span><strong id="tally-num">0</strong> <span class="muted">of <span id="tally-total">14</span> vaults fixed</span></span>
+      <div class="bars" id="tally-bars" aria-hidden="true"></div>
+    </div>
+  </header>
+
+  <nav class="doors" id="doors" aria-label="Vaults"></nav>
+
+  <div id="unlock-slot"></div>
+  <section class="panel finale" id="finale" hidden></section>
+
+  <div class="main">
+    <section class="panel brief" id="brief" aria-live="polite"></section>
+
+    <section class="bench" aria-label="Workbench">
+      <div class="toolbar">
+        <span class="filename" id="filename">vault1.js</span>
+        <div class="right">
+          <button class="btn quiet" id="btn-reset" type="button">Reset code</button>
+          <button class="btn" id="btn-run" type="button">Run</button>
+          <button class="btn primary" id="btn-check" type="button">Check</button>
+        </div>
+      </div>
+      <div class="editor">
+        <div class="gutter" id="gutter" aria-hidden="true">1</div>
+        <textarea id="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Code to fix"></textarea>
+      </div>
+      <p class="editor-help">Run tries the example call and shows the console, including any <code>console.log</code> you add. Tab adds two spaces; press Esc, then Tab, to leave the editor. <span class="kbd">Ctrl+Enter</span> or <span class="kbd">⌘+Enter</span> runs the checks.</p>
+
+      <div class="split">
+        <div class="box">
+          <div class="box-head"><span>Console</span><span id="run-tag"></span></div>
+          <div class="box-body console" id="console"><div class="dim">Press Run to try the code.</div></div>
+        </div>
+        <div class="box">
+          <div class="box-head"><span>Checks</span><span id="check-tag"></span></div>
+          <div class="box-body" id="results"><p class="muted">Press Check when you think the bug is fixed.</p></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <span>Your progress and code are saved in this browser.</span>
+    <span class="confirm" id="reset-area"><button class="btn quiet" id="btn-reset-all" type="button">Reset all progress</button></span>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  if (!window.Babel) {
+    $("results").innerHTML = '<div class="errorbox">The game could not load its code checker. Check your internet connection and reload the page.</div>';
+    return;
+  }
+
+  /* ---------- Showing values the way the browser console does ---------- */
+  function fmt(v, depth = 0) {
+    if (typeof v === "string") return JSON.stringify(v);
+    if (typeof v === "number" || typeof v === "boolean" || v === null || v === undefined || typeof v === "bigint") return String(v);
+    if (typeof v === "function") return "function " + (v.name || "(anonymous)");
+    if (v instanceof Error) return v.name + ": " + v.message;
+    if (v && typeof v.then === "function") return "Promise { <pending> }";
+    if (depth > 3) return Array.isArray(v) ? "[…]" : "{…}";
+    if (Array.isArray(v)) return "[" + v.map((x) => fmt(x, depth + 1)).join(", ") + "]";
+    if (typeof v === "object") {
+      const keys = Object.keys(v);
+      if (!keys.length) return "{}";
+      return "{ " + keys.map((k) => (/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k)) + ": " + fmt(v[k], depth + 1)).join(", ") + " }";
+    }
+    return String(v);
+  }
+  const show = (v) => (typeof v === "string" ? v : fmt(v));
+
+  function deepEqual(a, b) {
+    if (a === b) return true;
+    if (typeof a === "number" && typeof b === "number") return Number.isNaN(a) && Number.isNaN(b);
+    if (!a || !b || typeof a !== "object" || typeof b !== "object") return false;
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+    const ka = Object.keys(a), kb = Object.keys(b);
+    if (ka.length !== kb.length) return false;
+    return ka.every((k) => Object.prototype.hasOwnProperty.call(b, k) && deepEqual(a[k], b[k]));
+  }
+  const clone = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
+
+  /* ---------- Practice data and fetch ---------- */
+  const PRACTICE = [
+    { id: 1, title: "Essence Mascara Lash Princess", price: 9.99 },
+    { id: 2, title: "Eyeshadow Palette with Mirror", price: 19.99 },
+    { id: 3, title: "Powder Canister", price: 14.99 },
+    { id: 4, title: "Red Lipstick", price: 12.99 },
+    { id: 5, title: "Red Nail Polish", price: 8.99 },
+    { id: 6, title: "Calvin Klein CK One", price: 49.99 },
+    { id: 7, title: "Chanel Coco Noir Eau De", price: 129.99 },
+    { id: 8, title: "Dior J'adore", price: 89.99 },
+    { id: 9, title: "Dolce Shine Eau de", price: 69.99 },
+    { id: 10, title: "Gucci Bloom Eau de", price: 79.99 }
+  ];
+  function okResponse(body) {
+    return { ok: true, status: 200, json: () => Promise.resolve(clone(body)), text: () => Promise.resolve(JSON.stringify(body)) };
+  }
+  const realFetch = window.fetch ? window.fetch.bind(window) : null;
+  function practiceFetch(url) {
+    let limit = 30;
+    try { limit = Number(new URL(String(url)).searchParams.get("limit")) || 30; } catch (e) {}
+    const products = PRACTICE.slice(0, limit);
+    return new Promise((r) => setTimeout(() => r(okResponse({ products, total: 194, skip: 0, limit: products.length })), 400));
+  }
+  // Run uses the real DummyJSON API when the page can reach it, and practice data in the same shape when it can't.
+  function runFetch(url, opts) {
+    if (!realFetch) return practiceFetch(url);
+    return realFetch(url, opts).catch(() => practiceFetch(url));
+  }
+  // The checks always use their own test data.
+  function mockFetch(products, calls) {
+    return function (url) {
+      calls.push(String(url));
+      return new Promise((r) => setTimeout(() => r(okResponse({ products, total: products.length, skip: 0, limit: products.length })), 40));
+    };
+  }
+
+  /* ---------- Compiling and running student code ---------- */
+  const LOOP_LIMIT = 1000000;
+  let loopCount = 0;
+  function guard() {
+    if (++loopCount > LOOP_LIMIT) {
+      const e = new Error("A loop ran more than a million times, so it was stopped. Check the loop's condition.");
+      e.name = "InfiniteLoop";
+      throw e;
+    }
+  }
+  function loopGuardPlugin({ types: t }) {
+    return {
+      visitor: {
+        "WhileStatement|DoWhileStatement|ForStatement|ForInStatement|ForOfStatement"(path) {
+          const call = t.expressionStatement(t.callExpression(t.identifier("__guard"), []));
+          const body = path.get("body");
+          if (body.isBlockStatement()) body.unshiftContainer("body", call);
+          else body.replaceWith(t.blockStatement([call, body.node]));
+        }
+      }
+    };
+  }
+
+  class CodeError extends Error {
+    constructor(title, detail) { super(title); this.title = title; this.detail = detail; }
+  }
+
+  function transform(src) {
+    try {
+      return Babel.transform(src, { plugins: [loopGuardPlugin], retainLines: true, sourceType: "script", compact: false }).code;
+    } catch (e) {
+      throw new CodeError("Your code has a syntax error", String(e.message || e).replace(/^unknown:\s*/, "").replace(/^\/?file\.js:\s*/, ""));
+    }
+  }
+
+  // Which line of the stack belongs to the student's code? Measured once, so it works in each browser.
+  let lineOffset = null;
+  function stackLine(err) {
+    const m = String(err && err.stack || "").match(/(?:<anonymous>|Function|eval[^:]*):(\d+):(\d+)/);
+    return m ? Number(m[1]) : null;
+  }
+  try { new Function("__guard", "fetch", '"use strict";throw new Error("probe");')(); }
+  catch (e) { const l = stackLine(e); lineOffset = l ? l - 1 : null; }
+  function whereIs(err, codeLines) {
+    if (lineOffset === null) return "";
+    const l = stackLine(err);
+    if (!l) return "";
+    const n = l - lineOffset;
+    return n >= 1 && n <= codeLines ? " on line " + n : "";
+  }
+
+  function makeFunction(body, fetchImpl) {
+    const full = '"use strict";' + body;
+    try {
+      return new Function("__guard", "fetch", full).call(undefined, guard, fetchImpl);
+    } catch (e) {
+      const cspBlocked = e instanceof EvalError || /unsafe-eval|Content Security|Refused to evaluate/i.test(String(e && e.message));
+      if (!cspBlocked) throw e;
+      let result, caught = null;
+      const onErr = (ev) => { caught = ev.error || new Error(ev.message); ev.preventDefault(); };
+      window.addEventListener("error", onErr);
+      window.__bvArgs = [guard, fetchImpl, (r) => { result = r; }];
+      const s = document.createElement("script");
+      s.textContent = "window.__bvArgs[2]((function(__guard, fetch){" + full + "\n}).apply(undefined, window.__bvArgs));";
+      document.head.appendChild(s); s.remove();
+      window.removeEventListener("error", onErr);
+      delete window.__bvArgs;
+      if (caught) throw caught;
+      return result;
+    }
+  }
+
+  function compileFn(src, name, fetchImpl) {
+    const code = transform(src);
+    const lines = src.split("\n").length;
+    let fn;
+    loopCount = 0;
+    try {
+      fn = makeFunction(code + "\n;return (typeof " + name + " !== 'undefined') ? " + name + " : undefined;", fetchImpl);
+    } catch (e) {
+      throw new CodeError("Your code stopped with an error" + whereIs(e, lines), e.name + ": " + e.message);
+    }
+    if (typeof fn !== "function") throw new CodeError("The function " + name + " is missing", "Keep the function's name, " + name + ", the same as in the original code.");
+    fn.__lines = lines;
+    return fn;
+  }
+
+  /* ---------- Check helpers ---------- */
+  function fail(msg) { throw new Error(msg); }
+  function withTimeout(p, ms, text) {
+    return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(text + " didn't finish within " + ms / 1000 + " seconds.")), ms))]);
+  }
+  async function call(fn, name, args) {
+    const text = name + "(" + args.map((a) => fmt(a)).join(", ") + ")";
+    loopCount = 0;
+    try {
+      let r = fn.apply(undefined, args);
+      if (r && typeof r.then === "function") r = await withTimeout(r, 2000, text);
+      return { text, value: r };
+    } catch (e) {
+      if (/didn't finish/.test(e.message)) fail(e.message);
+      fail(text + " stopped with an error" + whereIs(e, fn.__lines) + ". " + e.name + ": " + e.message);
+    }
+  }
+  function expectValue(res, expected) {
+    if (!deepEqual(res.value, expected)) fail(res.text + " returned " + fmt(res.value) + ". Expected " + fmt(expected) + ".");
+  }
+
+  /* ---------- The vaults ---------- */
+  const GOLD = { id: 11, title: "Gold Bar", price: 500 };
+  const MAP = { id: 12, title: "Old Map", price: 50 };
+  const COIN = { id: 13, title: "Silver Coin", price: 20 };
+  const RING = { id: 14, title: "Diamond Ring", price: 300 };
+
+  const LEVELS = [
+    {
+      name: "The Welcome Sign", fn: "greet", bugs: 1,
+      story: "The sign over the door should greet each agent by name. Instead it prints something strange.",
+      goal: "Return a welcome message with the agent's name in it.",
+      examples: [['greet("Asha")', '"Welcome, Asha!"'], ['greet("Ravi")', '"Welcome, Ravi!"']],
+      concepts: ["template literals", "backticks"],
+      hints: ["Run it and look at the output. Is the name in it?", "<code>${name}</code> only works inside backticks: <code>`Welcome, ${name}!`</code> In single or double quotes it is plain text."],
+      starter:
+`// Should return a welcome message, like "Welcome, Asha!"
+function greet(name) {
+  return 'Welcome, \${name}!';
+}
+`,
+      tryIt: 'console.log(greet("Asha"));',
+      cases: [[["Asha"], "Welcome, Asha!"], [["Ravi"], "Welcome, Ravi!"]]
+    },
+    {
+      name: "The Coin Total", fn: "sumPrices", bugs: 1,
+      story: "The vault adds up the price of everything inside. It crashes before it gets an answer.",
+      goal: "Add up all the prices in the list and return the total.",
+      examples: [["sumPrices([500, 300, 100])", "900"], ["sumPrices([])", "0"]],
+      concepts: ["let", "const"],
+      hints: ["Run it and read the error. Which line does it point to?", "A <code>const</code> can't be given a new value. A value that changes needs <code>let</code>."],
+      starter:
+`// Should add up all the prices in the list.
+function sumPrices(prices) {
+  const total = 0;
+  for (const price of prices) {
+    total = total + price;
+  }
+  return total;
+}
+`,
+      tryIt: "console.log(sumPrices([500, 300, 100]));",
+      cases: [[[[500, 300, 100]], 900], [[[]], 0], [[[7]], 7]]
+    },
+    {
+      name: "The Lock", fn: "unlock", bugs: 1,
+      story: "This lock opens for any code at all. Anyone can walk in.",
+      goal: 'Return "Unlocked!" only when the code is exactly "REACT". Any other code returns "Locked".',
+      examples: [['unlock("REACT")', '"Unlocked!"'], ['unlock("1234")', '"Locked"'], ['unlock("react")', '"Locked"']],
+      concepts: ["= vs ===", "if"],
+      hints: ["Try it with a wrong code. Why does the if run anyway?", "<code>=</code> puts a value into a variable. <code>===</code> compares two values. Use <code>code === \"REACT\"</code>."],
+      starter:
+`// Should return "Unlocked!" only when the code is exactly "REACT".
+function unlock(code) {
+  if (code = "REACT") {
+    return "Unlocked!";
+  }
+  return "Locked";
+}
+`,
+      tryIt: 'console.log(unlock("1234"));',
+      cases: [[["REACT"], "Unlocked!"], [["1234"], "Locked"], [["react"], "Locked"]]
+    },
+    {
+      name: "The Strict Guard", fn: "isZero", bugs: 1,
+      story: "The guard should only let the number zero through. It keeps letting in things that just look like zero.",
+      goal: 'Return true only for the number 0. Return false for everything else, including "0", "" and false.',
+      examples: [["isZero(0)", "true"], ['isZero("0")', "false"], ['isZero("")', "false"], ["isZero(false)", "false"]],
+      concepts: ["== vs ==="],
+      hints: ['Try <code>console.log(isZero(""))</code>. Why is it true?', "<code>==</code> converts types before comparing, so <code>\"\" == 0</code> is true. <code>===</code> also checks the type."],
+      starter:
+`// Should return true only for the number 0.
+function isZero(value) {
+  return value == 0;
+}
+`,
+      tryIt: 'console.log(isZero(0), isZero("0"), isZero(""), isZero(false));',
+      cases: [[[0], true], [["0"], false], [[""], false], [[false], false], [[5], false]]
+    },
+    {
+      name: "The Long Hallway", fn: "countLongWords", bugs: 1,
+      story: "The hallway counter walks one step too far and falls off the end.",
+      goal: "Count how many words have more than 4 letters.",
+      examples: [['countLongWords(["vault", "key", "golden", "map"])', "2"], ["countLongWords([])", "0"]],
+      concepts: ["for loops", "array indexes"],
+      hints: ["A list with 4 items has positions 0, 1, 2 and 3. Which position does the loop reach last?", "Use <code>i &lt; words.length</code>, not <code>&lt;=</code>."],
+      starter:
+`// Should count the words that have more than 4 letters.
+function countLongWords(words) {
+  let count = 0;
+  for (let i = 0; i <= words.length; i++) {
+    if (words[i].length > 4) {
+      count++;
+    }
+  }
+  return count;
+}
+`,
+      tryIt: 'console.log(countLongWords(["vault", "key", "golden", "map"]));',
+      cases: [[[["vault", "key", "golden", "map"]], 2], [[[]], 0], [[["treasure"]], 1]]
+    },
+    {
+      name: "The Doubler", fn: "doubleAll", bugs: 1,
+      story: "The doubling machine takes in numbers and hands back a list of nothing.",
+      goal: "Return a new list with every number doubled.",
+      examples: [["doubleAll([1, 2, 3])", "[2, 4, 6]"], ["doubleAll([10])", "[20]"]],
+      concepts: [".map()", "arrow functions", "return"],
+      hints: ["Run it. What is in the list it gives back?", "An arrow function with <code>{ }</code> needs <code>return</code>. Write <code>(n) =&gt; { return n * 2; }</code>, or drop the braces: <code>(n) =&gt; n * 2</code>."],
+      starter:
+`// Should return a new list with every number doubled.
+function doubleAll(numbers) {
+  return numbers.map((n) => {
+    n * 2;
+  });
+}
+`,
+      tryIt: "console.log(doubleAll([1, 2, 3]));",
+      cases: [[[[1, 2, 3]], [2, 4, 6]], [[[]], []], [[[10]], [20]]]
+    },
+    {
+      name: "The Bargain Shelf", fn: "cheapProducts", bugs: 1,
+      story: "The shelf should hold only the cheap treasures. It's full of true and false instead.",
+      goal: "Return only the products that cost less than 100.",
+      examples: [['cheapProducts([\n  { title: "Gold Bar", price: 500 },\n  { title: "Old Map", price: 50 }\n])', '[{ title: "Old Map", price: 50 }]']],
+      concepts: [".filter()", ".map()"],
+      hints: ["<code>.map()</code> changes every item. Here you want to keep some items and drop the rest.", "Use <code>.filter((p) =&gt; p.price &lt; 100)</code>."],
+      starter:
+`// Should return only the products that cost less than 100.
+function cheapProducts(products) {
+  return products.map((p) => p.price < 100);
+}
+`,
+      tryIt: 'console.log(cheapProducts([\n  { id: 11, title: "Gold Bar", price: 500 },\n  { id: 12, title: "Old Map", price: 50 }\n]));',
+      cases: [[[[GOLD, MAP, COIN]], [MAP, COIN]], [[[GOLD, RING]], []], [[[]], []]]
+    },
+    {
+      name: "The Label Maker", fn: "describe", bugs: 1,
+      story: "The label maker should print each treasure's name and price. It can't find either.",
+      goal: 'Return a label like "Gold Bar costs $500".',
+      examples: [['describe({ title: "Gold Bar", price: 500 })', '"Gold Bar costs $500"']],
+      concepts: ["objects", "dot notation"],
+      hints: ["Run it and read the error. What does JavaScript think <code>title</code> is?", "Without quotes, <code>product[title]</code> looks for a variable called title. Use <code>product.title</code> and <code>product.price</code>."],
+      starter:
+`// Should return a label like "Gold Bar costs $500".
+function describe(product) {
+  return product[title] + " costs $" + product[price];
+}
+`,
+      tryIt: 'console.log(describe({ title: "Gold Bar", price: 500 }));',
+      cases: [[[{ title: "Gold Bar", price: 500 }], "Gold Bar costs $500"], [[{ title: "Old Map", price: 50 }], "Old Map costs $50"]]
+    },
+    {
+      name: "The Badge", fn: "badge", bugs: 1,
+      story: "Every badge says the agent's rank is undefined. The guard is not impressed.",
+      goal: 'Return a badge like "Agent Asha, rank 3" from an agent object { name, rank }.',
+      examples: [['badge({ name: "Asha", rank: 3 })', '"Agent Asha, rank 3"']],
+      concepts: ["destructuring", "objects"],
+      hints: ["Destructuring only finds properties with the same name as in the object.", "The object has <code>rank</code>, not <code>level</code>: <code>const { name, rank } = agent;</code>"],
+      starter:
+`// Should return a badge like "Agent Asha, rank 3".
+function badge(agent) {
+  const { name, level } = agent;
+  return \`Agent \${name}, rank \${level}\`;
+}
+`,
+      tryIt: 'console.log(badge({ name: "Asha", rank: 3 }));',
+      cases: [[[{ name: "Asha", rank: 3 }], "Agent Asha, rank 3"], [[{ name: "Ravi", rank: 7 }], "Agent Ravi, rank 7"]]
+    },
+    {
+      name: "The Cart", fn: "addToCart", bugs: 1,
+      story: "Adding to the cart quietly changes the old cart too. React won't notice the change.",
+      goal: "Return a NEW cart with the item added at the end. The original cart must not change. React state needs this.",
+      examples: [['addToCart(["Gold Bar"], "Old Map")', '["Gold Bar", "Old Map"]'], ["The original cart afterwards", '["Gold Bar"]  (unchanged)']],
+      concepts: ["spread ...", "not changing arrays"],
+      hints: ["<code>push</code> changes the list you were given. Run the example and look at the original cart.", "Make a new list instead: <code>return [...cart, item];</code>"],
+      starter:
+`// Should return a NEW cart with the item added.
+// The original cart must not change.
+function addToCart(cart, item) {
+  cart.push(item);
+  return cart;
+}
+`,
+      tryIt: 'const cart = ["Gold Bar"];\nconst newCart = addToCart(cart, "Old Map");\nconsole.log("new cart:", newCart);\nconsole.log("original cart:", cart);',
+      checks: [
+        { label: 'addToCart(["Gold Bar"], "Old Map") returns ["Gold Bar", "Old Map"]', run: async (fn) => {
+            const res = await call(fn, "addToCart", [["Gold Bar"], "Old Map"]);
+            expectValue(res, ["Gold Bar", "Old Map"]);
+        } },
+        { label: "The original cart doesn't change", run: async (fn) => {
+            const cart = ["Gold Bar"];
+            await call(fn, "addToCart", [cart, "Old Map"]);
+            if (!deepEqual(cart, ["Gold Bar"])) fail("After the call, the original cart is " + fmt(cart) + '. It should still be ["Gold Bar"].');
+        } },
+        { label: "It returns a new list, not the same one", run: async (fn) => {
+            const cart = ["Gold Bar"];
+            const res = await call(fn, "addToCart", [cart, "Old Map"]);
+            if (res.value === cart) fail("addToCart returned the same list it was given. Return a new list with [...cart, item].");
+        } }
+      ]
+    },
+    {
+      name: "The Sold Sign", fn: "markSold", bugs: 1,
+      story: "Marking one treasure as sold changes the original record as well.",
+      goal: "Return a NEW product object with sold set to true. The original product must not change.",
+      examples: [['markSold({ title: "Old Map", price: 50 })', '{ title: "Old Map", price: 50, sold: true }'], ["The original product afterwards", '{ title: "Old Map", price: 50 }  (unchanged)']],
+      concepts: ["spread { ... }", "not changing objects"],
+      hints: ["Setting <code>product.sold</code> changes the object you were given.", "Copy it and change one property: <code>return { ...product, sold: true };</code>"],
+      starter:
+`// Should return a NEW product object with sold set to true.
+// The original product must not change.
+function markSold(product) {
+  product.sold = true;
+  return product;
+}
+`,
+      tryIt: 'const map = { title: "Old Map", price: 50 };\nconsole.log("sold:", markSold(map));\nconsole.log("original:", map);',
+      checks: [
+        { label: "It returns the product with sold: true", run: async (fn) => {
+            const res = await call(fn, "markSold", [{ title: "Old Map", price: 50 }]);
+            expectValue(res, { title: "Old Map", price: 50, sold: true });
+        } },
+        { label: "The original product doesn't change", run: async (fn) => {
+            const product = { title: "Old Map", price: 50 };
+            await call(fn, "markSold", [product]);
+            if (!deepEqual(product, { title: "Old Map", price: 50 })) fail("After the call, the original product is " + fmt(product) + ". It should not have changed.");
+        } },
+        { label: "It returns a new object, not the same one", run: async (fn) => {
+            const product = { title: "Old Map", price: 50 };
+            const res = await call(fn, "markSold", [product]);
+            if (res.value === product) fail("markSold returned the same object it was given. Return a copy with { ...product, sold: true }.");
+        } }
+      ]
+    },
+    {
+      name: "The Waiting Room", fn: "getTitles", bugs: 1,
+      story: "This vault asks the server for its treasure list, but doesn't wait for the answer.",
+      goal: "Fetch the products and return a list of their titles.",
+      examples: [["await getTitles()", '["Essence Mascara Lash Princess", "Eyeshadow Palette with Mirror", ...]']],
+      concepts: ["async / await", "fetch", "promises"],
+      hints: ["Run it and read the error. What is <code>res</code> when <code>res.json()</code> is called?", "<code>fetch</code> gives back a promise. Put <code>await</code> in front of <code>fetch(...)</code> and in front of <code>res.json()</code>."],
+      starter:
+`// Should fetch the products and return a list of their titles.
+async function getTitles() {
+  const res = fetch("https://dummyjson.com/products?limit=5&select=title");
+  const data = res.json();
+  return data.products.map((p) => p.title);
+}
+`,
+      tryIt: "console.log(await getTitles());",
+      checks: [
+        { label: "It returns the titles from the API", run: async (_, src, make) => {
+            const calls = [];
+            const fn = make(mockFetch([GOLD, MAP, COIN], calls));
+            const res = await call(fn, "getTitles", []);
+            expectValue(res, ["Gold Bar", "Old Map", "Silver Coin"]);
+        } },
+        { label: "It fetches from dummyjson.com/products once", run: async (_, src, make) => {
+            const calls = [];
+            const fn = make(mockFetch([GOLD], calls));
+            await call(fn, "getTitles", []);
+            if (calls.length !== 1) fail("fetch was called " + calls.length + " times. Expected once.");
+            if (!calls[0].includes("dummyjson.com/products")) fail("fetch was called with " + calls[0] + ".");
+        } }
+      ]
+    },
+    {
+      name: "The Bargain Hunt", fn: "getCheapTitles", bugs: 2,
+      story: "This one fetches the treasure list and picks the bargains. Two things are wrong with it.",
+      goal: "Fetch the products and return the titles of those that cost less than 100.",
+      examples: [["await getCheapTitles()", '["Essence Mascara Lash Princess", "Eyeshadow Palette with Mirror", ...]']],
+      concepts: [".filter()", ".map()", "await"],
+      hints: ["Run it, fix the first error, then run it again. Bugs often hide behind each other.", "<code>res.json()</code> also needs <code>await</code>. The arrow function in <code>.filter</code> has braces but no <code>return</code>."],
+      starter:
+`// Should fetch the products and return the titles
+// of those that cost less than 100.
+// This one has 2 bugs.
+async function getCheapTitles() {
+  const res = await fetch("https://dummyjson.com/products?limit=10&select=title,price");
+  const data = res.json();
+  const cheap = data.products.filter((p) => { p.price < 100 });
+  return cheap.map((p) => p.title);
+}
+`,
+      tryIt: "console.log(await getCheapTitles());",
+      checks: [
+        { label: "It returns only the cheap titles", run: async (_, src, make) => {
+            const fn = make(mockFetch([GOLD, MAP, RING, COIN], []));
+            const res = await call(fn, "getCheapTitles", []);
+            expectValue(res, ["Old Map", "Silver Coin"]);
+        } },
+        { label: "It works with other data", run: async (_, src, make) => {
+            const fn = make(mockFetch([{ id: 1, title: "Pearl", price: 99 }, { id: 2, title: "Crown", price: 100 }], []));
+            const res = await call(fn, "getCheapTitles", []);
+            expectValue(res, ["Pearl"]);
+        } }
+      ]
+    },
+    {
+      name: "The Final Repair", fn: "buildReport", bugs: 3,
+      story: "The last vault writes a report on every treasure. Three separate bugs keep it shut.",
+      goal: 'Fetch the products and return one line per product, like "1. Gold Bar - $500", numbered from 1.',
+      examples: [["await buildReport()", '["1. Essence Mascara Lash Princess - $9.99", "2. Eyeshadow Palette with Mirror - $19.99", ...]']],
+      concepts: ["await", "template literals", "indexes", "objects"],
+      hints: ["Fix one error at a time: Run, read the message, fix that line, Run again.", "Look for: <code>res.json</code> written without <code>()</code>, a template string written in normal quotes, and numbering that starts from 0 instead of 1."],
+      starter:
+`// Should fetch the products and return one line per product,
+// like "1. Gold Bar - $500", numbered from 1.
+// This one has 3 bugs.
+async function buildReport() {
+  const res = await fetch("https://dummyjson.com/products?limit=5&select=title,price");
+  const data = await res.json;
+  return data.products.map((product, i) => {
+    return "\${i}. \${product.title} - $\${product.price}";
+  });
+}
+`,
+      tryIt: "console.log(await buildReport());",
+      checks: [
+        { label: "It returns a numbered line for each product", run: async (_, src, make) => {
+            const fn = make(mockFetch([GOLD, MAP], []));
+            const res = await call(fn, "buildReport", []);
+            expectValue(res, ["1. Gold Bar - $500", "2. Old Map - $50"]);
+        } },
+        { label: "It works with other data", run: async (_, src, make) => {
+            const fn = make(mockFetch([RING, COIN, MAP], []));
+            const res = await call(fn, "buildReport", []);
+            expectValue(res, ["1. Diamond Ring - $300", "2. Silver Coin - $20", "3. Old Map - $50"]);
+        } }
+      ]
+    }
+  ];
+  LEVELS.forEach((l, i) => {
+    l.id = i + 1; l.file = "vault" + (i + 1) + ".js";
+    if (!l.checks) {
+      l.checks = l.cases.map(([args, expected]) => ({
+        label: l.fn + "(" + args.map((a) => fmt(a)).join(", ") + ") returns " + fmt(expected),
+        run: async (fn) => { const res = await call(fn, l.fn, clone(args)); expectValue(res, expected); }
+      }));
+    }
+  });
+  const TOTAL = LEVELS.length;
+
+  /* ---------- Saved progress (this browser only) ---------- */
+  const STORE = "broken-vault-v1";
+  function load() { try { return JSON.parse(localStorage.getItem(STORE)) || null; } catch (e) { return null; } }
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+  const state = Object.assign({ open: [], current: 1, code: {} }, load() || {});
+  const isOpen = (id) => state.open.includes(id);
+  const isReachable = (id) => id === 1 || isOpen(id - 1) || isOpen(id);
+  const levelById = (id) => LEVELS.find((l) => l.id === id);
+  function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+  /* ---------- Rendering ---------- */
+  function renderTally() {
+    $("tally-num").textContent = state.open.length;
+    $("tally-total").textContent = TOTAL;
+    $("tally-bars").innerHTML = LEVELS.map((l) => '<span class="' + (isOpen(l.id) ? "on" : "") + '"></span>').join("");
+  }
+  function renderDoors(spinId) {
+    $("doors").innerHTML = "";
+    for (const l of LEVELS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      const open = isOpen(l.id), reach = isReachable(l.id), cur = state.current === l.id;
+      b.className = "door" + (open ? " open" : "") + (cur ? " current" : "") + (spinId === l.id ? " spin" : "");
+      b.disabled = !reach;
+      const st = open ? "Fixed" : reach ? "Broken" : "Locked";
+      b.setAttribute("aria-label", "Vault " + l.id + ": " + l.name + ", " + st.toLowerCase());
+      if (cur) b.setAttribute("aria-current", "step");
+      b.innerHTML = '<span class="dial">' + (open ? "✓" : l.id) + '</span><span class="dname">' + l.name + '</span><span class="dstate">' + st + "</span>";
+      b.addEventListener("click", () => goTo(l.id));
+      $("doors").appendChild(b);
+    }
+  }
+  function renderBrief() {
+    const l = levelById(state.current);
+    const ex = l.examples.map(([a, b]) => escapeHtml(a.trim()) + '\n  <span class="arrow">→</span> ' + escapeHtml(b)).join("\n");
+    $("brief").innerHTML =
+      '<span class="eyebrow">Vault ' + l.id + " of " + TOTAL + (l.id === TOTAL ? " · final vault" : "") + (isOpen(l.id) ? " · fixed" : "") + "</span>" +
+      "<h2>" + l.name + "</h2>" +
+      '<p class="story">' + l.story + "</p>" +
+      '<span class="bugcount">' + l.bugs + (l.bugs === 1 ? " bug" : " bugs") + " to fix</span>" +
+      "<h3>What it should do</h3>" +
+      "<p>" + escapeHtml(l.goal) + "</p>" +
+      '<div class="examples">' + ex + "</div>" +
+      '<div class="concepts">' + l.concepts.map((c) => '<span class="chip">' + escapeHtml(c) + "</span>").join("") + "</div>" +
+      "<div>" + l.hints.map((x, i) => '<details class="hint"><summary>Hint ' + (i + 1) + "</summary><p>" + x + "</p></details>").join("") + "</div>" +
+      '<p class="note">Fix the code in the editor. Keep the function\'s name, <code>' + l.fn + "</code>, the same.</p>";
+  }
+
+  const editor = $("code-editor");
+  function updateGutter() {
+    const n = editor.value.split("\n").length;
+    let s = ""; for (let i = 1; i <= n; i++) s += i + "\n";
+    $("gutter").textContent = s;
+    $("gutter").scrollTop = editor.scrollTop;
+  }
+  function loadEditor() {
+    const l = levelById(state.current);
+    editor.value = state.code[l.id] != null ? state.code[l.id] : l.starter;
+    $("filename").textContent = l.file;
+    updateGutter();
+  }
+  function resetPanels() {
+    $("console").innerHTML = '<div class="dim">Press Run to try the code.</div>';
+    $("run-tag").textContent = "";
+    $("results").innerHTML = '<p class="muted">Press Check when you think the bug is fixed.</p>';
+    $("check-tag").textContent = "";
+  }
+  function goTo(id) {
+    if (!isReachable(id)) return;
+    state.current = id; save();
+    $("unlock-slot").innerHTML = "";
+    renderDoors(); renderBrief(); loadEditor(); resetPanels(); renderFinale();
+  }
+
+  /* ---------- Run: the example call, with the console ---------- */
+  let runId = 0;
+  function consoleLine(cls, text) {
+    const d = document.createElement("div");
+    d.className = "line" + (cls ? " " + cls : "");
+    d.textContent = text;
+    $("console").appendChild(d);
+  }
+  async function run() {
+    const l = levelById(state.current);
+    const src = editor.value;
+    const myRun = ++runId;
+    $("console").innerHTML = "";
+    $("run-tag").textContent = "running";
+    consoleLine("cmd", "> " + l.tryIt.split("\n").join("\n  "));
+    let code;
+    try { code = transform(src); }
+    catch (e) { consoleLine("err", e.title + "\n" + e.detail); $("run-tag").textContent = "error"; return; }
+    const lines = src.split("\n").length;
+    const saved = { log: console.log, info: console.info, warn: console.warn, error: console.error };
+    let printed = 0;
+    const capture = (cls) => function () {
+      if (myRun !== runId) return;
+      printed++;
+      consoleLine(cls, Array.prototype.map.call(arguments, show).join(" "));
+    };
+    console.log = capture(""); console.info = capture(""); console.warn = capture(""); console.error = capture("err");
+    loopCount = 0;
+    let errored = false;
+    try {
+      const p = makeFunction(code + "\n;return (async () => {\n" + l.tryIt + "\n})();", runFetch);
+      await withTimeout(p, 6000, "The example");
+    } catch (e) {
+      errored = true;
+      if (myRun === runId) consoleLine("err", (e.name || "Error") + (whereIs(e, lines) ? " on line " + whereIs(e, lines).replace(" on line ", "") : "") + ": " + e.message);
+    } finally {
+      Object.assign(console, saved);
+    }
+    if (myRun !== runId) return;
+    if (!printed && !errored) consoleLine("dim", "(Nothing was printed.)");
+    $("run-tag").textContent = errored ? "error" : "done";
+  }
+
+  /* ---------- Check ---------- */
+  let checking = false;
+  async function check() {
+    if (checking) return;
+    checking = true; $("btn-check").disabled = true;
+    const l = levelById(state.current);
+    const src = editor.value;
+    state.code[l.id] = src; save();
+    const make = (fetchImpl) => compileFn(src, l.fn, fetchImpl);
+    try { make(mockFetch([], [])); }
+    catch (e) {
+      $("results").innerHTML = '<p class="summary" style="color:var(--bad)">' + escapeHtml(e.title || "Error") + '</p><div class="errorbox">' + escapeHtml(e.detail || e.message) + "</div>";
+      $("check-tag").textContent = "0 of " + l.checks.length;
+      checking = false; $("btn-check").disabled = false;
+      return;
+    }
+    const list = document.createElement("ul"); list.className = "checks";
+    const items = l.checks.map((c) => {
+      const li = document.createElement("li"); li.className = "wait";
+      li.innerHTML = '<span class="mark" aria-hidden="true">·</span><span class="lbl">' + escapeHtml(c.label) + "</span>";
+      list.appendChild(li); return li;
+    });
+    $("results").innerHTML = ""; $("results").appendChild(list);
+    const saved = { log: console.log, info: console.info, warn: console.warn, error: console.error };
+    let passed = 0;
+    for (let i = 0; i < l.checks.length; i++) {
+      let ok = true, why = "";
+      console.log = console.info = console.warn = console.error = function () {};
+      try {
+        const fn = make(mockFetch([], []));
+        await l.checks[i].run(fn, src, make);
+      } catch (e) { ok = false; why = e.detail ? e.title + ". " + e.detail : (e && e.message ? e.message : String(e)); }
+      finally { Object.assign(console, saved); }
+      if (ok) passed++;
+      items[i].className = ok ? "ok" : "bad";
+      items[i].innerHTML = '<span class="mark" aria-hidden="true">' + (ok ? "✓" : "✗") + '</span><span class="lbl">' + escapeHtml(l.checks[i].label) +
+        (ok ? "" : '<span class="why">' + escapeHtml(why) + "</span>") + '<span class="offscreen">' + (ok ? " passed" : " failed") + "</span></span>";
+    }
+    const all = passed === l.checks.length;
+    const sum = document.createElement("p"); sum.className = "summary";
+    sum.textContent = all ? "All checks passed. Bug fixed!" : passed + " of " + l.checks.length + " checks passed.";
+    sum.style.marginTop = "0.8rem";
+    sum.style.color = all ? "var(--ok)" : "var(--ink)";
+    $("results").appendChild(sum);
+    $("check-tag").textContent = passed + " of " + l.checks.length;
+    if (all) unlock(l);
+    checking = false; $("btn-check").disabled = false;
+  }
+
+  function unlock(l) {
+    const first = !isOpen(l.id);
+    if (first) { state.open.push(l.id); state.open.sort((a, b) => a - b); save(); }
+    renderTally(); renderDoors(l.id); renderBrief();
+    const next = levelById(l.id + 1);
+    const slot = $("unlock-slot");
+    slot.innerHTML = "";
+    const div = document.createElement("div");
+    div.className = "unlock pop";
+    div.setAttribute("role", "status");
+    div.innerHTML = '<div><div class="stamp">Vault ' + l.id + " fixed</div><p>" + (next ? "Vault " + next.id + ", " + next.name + ", is next." : "That was the final vault.") + "</p></div>";
+    if (next) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "btn primary"; b.textContent = "Go to Vault " + next.id;
+      b.addEventListener("click", () => goTo(next.id));
+      div.appendChild(b);
+    }
+    slot.appendChild(div);
+    renderFinale();
+    if (!next && first) $("finale").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function renderFinale() {
+    const f = $("finale");
+    if (state.open.length < TOTAL) { f.hidden = true; f.innerHTML = ""; return; }
+    f.hidden = false;
+    const skills = ["template literals", "let and const", "= vs ===", "== vs ===", "loop indexes", "arrow function returns", ".map()", ".filter()", "objects", "destructuring", "spread for arrays", "spread for objects", "async / await", "fetch", "reading error messages"];
+    f.innerHTML =
+      '<span class="eyebrow">All ' + TOTAL + " vaults fixed</span>" +
+      "<h2>Every machine works again</h2>" +
+      "<p>You found and fixed every bug in The Broken Vault. You can go back to any vault to practise it again.</p>" +
+      '<div class="skills">' + skills.map((s) => '<span class="chip">' + escapeHtml(s) + "</span>").join("") + "</div>";
+  }
+
+  /* ---------- Reset ---------- */
+  let resetArm = null;
+  $("btn-reset").addEventListener("click", () => {
+    const b = $("btn-reset");
+    if (!resetArm) {
+      b.textContent = "Click again to reset";
+      resetArm = setTimeout(() => { resetArm = null; b.textContent = "Reset code"; }, 3000);
+      return;
+    }
+    clearTimeout(resetArm); resetArm = null; b.textContent = "Reset code";
+    delete state.code[state.current]; save(); loadEditor(); resetPanels();
+  });
+  function showResetButton() {
+    $("reset-area").innerHTML = '<button class="btn quiet" id="btn-reset-all" type="button">Reset all progress</button>';
+    $("btn-reset-all").addEventListener("click", askReset);
+  }
+  function askReset() {
+    $("reset-area").innerHTML = '<span>Reset all vaults and code?</span><button class="btn" id="yes-reset" type="button">Yes, reset</button><button class="btn quiet" id="no-reset" type="button">Cancel</button>';
+    $("yes-reset").addEventListener("click", () => {
+      state.open = []; state.current = 1; state.code = {}; save();
+      showResetButton(); $("unlock-slot").innerHTML = ""; renderAll();
+    });
+    $("no-reset").addEventListener("click", showResetButton);
+  }
+  $("btn-reset-all").addEventListener("click", askReset);
+
+  /* ---------- Editor behaviour ---------- */
+  let escFlag = false, saveTimer = null;
+  function insertText(text) {
+    editor.focus();
+    if (!document.execCommand || !document.execCommand("insertText", false, text)) {
+      editor.setRangeText(text, editor.selectionStart, editor.selectionEnd, "end");
+    }
+    updateGutter();
+  }
+  editor.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { escFlag = true; return; }
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); check(); return; }
+    if (e.key === "Tab" && !e.shiftKey && !escFlag) { e.preventDefault(); insertText("  "); return; }
+    if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+      const before = editor.value.slice(0, editor.selectionStart);
+      const line = before.slice(before.lastIndexOf("\n") + 1);
+      let indent = (line.match(/^\s*/) || [""])[0];
+      if (/[{(\[]\s*$/.test(line)) indent += "  ";
+      e.preventDefault(); insertText("\n" + indent);
+      return;
+    }
+    escFlag = false;
+  });
+  editor.addEventListener("input", () => {
+    updateGutter();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { state.code[state.current] = editor.value; save(); }, 300);
+  });
+  editor.addEventListener("scroll", () => { $("gutter").scrollTop = editor.scrollTop; });
+  editor.addEventListener("blur", () => { escFlag = false; });
+  $("btn-run").addEventListener("click", run);
+  $("btn-check").addEventListener("click", check);
+
+  function renderAll() {
+    if (!isReachable(state.current)) state.current = 1;
+    renderTally(); renderDoors(); renderBrief(); loadEditor(); resetPanels(); renderFinale();
+  }
+  window.__vault = { LEVELS, state, check, run, goTo };
+  renderAll();
+})();
+</script>
+</body>
+</html>
