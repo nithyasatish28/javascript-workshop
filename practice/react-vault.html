@@ -1,0 +1,1361 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>The React Vault</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a row of vault doors on top; below it, the brief on the left and the workbench (editor, preview, checks) on the right */
+:root {
+  --bg: #e3e6e9;          /* brushed steel */
+  --panel: #f5f6f7;
+  --panel-2: #eceef0;
+  --ink: #1c232b;
+  --muted: #56616c;
+  --rule: #c5ccd3;
+  --brass: #8f6418;       /* readable brass on light */
+  --brass-bright: #c8963e;
+  --brass-soft: #f3e6cc;
+  --ok: #2b7a4b;
+  --ok-soft: #dcefe3;
+  --bad: #b3261e;
+  --bad-soft: #f8e1df;
+  --editor-bg: #1f252c;   /* the editor stays dark in both themes, by choice */
+  --editor-ink: #e4e8ec;
+  --editor-gutter: #6f7b87;
+  --editor-sel: #3b4654;
+  --font-display: "Saira Stencil One", "Impact", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181c; --panel: #1b2026; --panel-2: #20262d; --ink: #e6e9ec; --muted: #9ca6b0; --rule: #2e353d;
+    --brass: #d9a84f; --brass-bright: #e5b862; --brass-soft: #3a2e17;
+    --ok: #63c98f; --ok-soft: #173325; --bad: #ff8a80; --bad-soft: #3d1c1a;
+    --editor-bg: #0f1317; --editor-ink: #e4e8ec; --editor-gutter: #5d6874; --editor-sel: #2d3742;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181c; --panel: #1b2026; --panel-2: #20262d; --ink: #e6e9ec; --muted: #9ca6b0; --rule: #2e353d;
+  --brass: #d9a84f; --brass-bright: #e5b862; --brass-soft: #3a2e17;
+  --ok: #63c98f; --ok-soft: #173325; --bad: #ff8a80; --bad-soft: #3d1c1a;
+  --editor-bg: #0f1317; --editor-ink: #e4e8ec; --editor-gutter: #5d6874; --editor-sel: #2d3742;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 1.25rem 3rem;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--panel-2); border: 1px solid var(--rule); padding: 0 0.3em; border-radius: 4px; }
+:focus-visible { outline: 3px solid var(--brass-bright); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; }
+
+/* Header */
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.75rem 1.5rem; }
+.brand { display: flex; flex-direction: column; gap: 0.15rem; }
+.brand h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 0.95; letter-spacing: 0.02em; text-transform: uppercase; }
+.brand p { color: var(--muted); }
+.tally { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; font-variant-numeric: tabular-nums; }
+.tally strong { font-family: var(--font-display); font-weight: 400; font-size: 1.6rem; color: var(--brass); }
+.bars { display: flex; gap: 3px; }
+.bars span { width: 14px; height: 8px; border-radius: 2px; background: var(--rule); }
+.bars span.on { background: var(--brass-bright); }
+
+/* Door strip */
+.doors { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 0.45rem; }
+@media (max-width: 1100px) { .doors { grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); } }
+.door {
+  border: 2px solid var(--rule); background: var(--panel); color: var(--ink);
+  border-radius: 10px; padding: 0.5rem 0.3rem 0.55rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem; min-width: 0;
+}
+.door .dial {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--panel-2); border: 3px solid var(--rule);
+  font-family: var(--font-display); font-size: 1.2rem; color: var(--muted);
+  position: relative;
+}
+.door .dial::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed var(--rule); }
+.door .dname { font-size: 0.7rem; font-weight: 600; text-align: center; line-height: 1.2; color: var(--muted); overflow-wrap: anywhere; }
+.door .dstate { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.door[disabled] { cursor: not-allowed; opacity: 0.55; }
+.door.open .dial { border-color: var(--brass-bright); color: var(--brass); background: var(--brass-soft); }
+.door.open .dstate { color: var(--ok); }
+.door.current { border-color: var(--brass-bright); box-shadow: 0 0 0 3px var(--brass-soft); }
+.door.current .dname { color: var(--ink); }
+.door:not([disabled]):hover { border-color: var(--brass); }
+.door.spin .dial { animation: spin 1.1s cubic-bezier(.5,0,.2,1); }
+@keyframes spin { 0% { transform: rotate(0); } 70% { transform: rotate(400deg); } 100% { transform: rotate(360deg); } }
+
+/* Main grid */
+.main { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 1.25rem; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1.1rem 1.2rem; min-width: 0; }
+
+/* Brief */
+.brief { display: flex; flex-direction: column; gap: 0.9rem; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass); font-weight: 600; }
+.brief h2 { font-family: var(--font-display); font-weight: 400; font-size: 2rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.02em; }
+.story { color: var(--muted); font-style: italic; }
+.brief h3 { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.task { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.expect { font-family: var(--font-mono); background: var(--panel-2); border: 1px dashed var(--rule); border-radius: 6px; padding: 0.5rem 0.7rem; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+.concepts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip { font-family: var(--font-mono); font-size: 0.78rem; border: 1px solid var(--rule); border-radius: 999px; padding: 0.1rem 0.6rem; background: var(--panel-2); }
+details.hint { border: 1px solid var(--rule); border-radius: 8px; background: var(--panel-2); padding: 0.5rem 0.75rem; }
+details.hint + details.hint { margin-top: 0.4rem; }
+details.hint summary { cursor: pointer; font-weight: 600; }
+details.hint p { margin-top: 0.4rem; }
+.brief .note { font-size: 0.88rem; color: var(--muted); }
+
+/* Workbench */
+.bench { display: flex; flex-direction: column; gap: 0.9rem; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: space-between; }
+.toolbar .right { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.filename { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); }
+.btn { border: 2px solid var(--ink); background: transparent; color: var(--ink); border-radius: 8px; padding: 0.4rem 0.9rem; font-weight: 700; }
+.btn:hover { background: var(--panel-2); }
+.btn.primary { background: var(--brass-bright); border-color: var(--brass-bright); color: #1a1408; }
+.btn.primary:hover { filter: brightness(1.06); background: var(--brass-bright); }
+.btn.quiet { border-color: var(--rule); color: var(--muted); font-weight: 600; }
+.btn[disabled] { opacity: 0.5; cursor: wait; }
+.kbd { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+
+.editor {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  background: var(--editor-bg); color: var(--editor-ink);
+  border-radius: 10px; overflow: hidden; min-height: 320px; max-height: 65vh;
+  font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.6;
+}
+.gutter { padding: 0.75rem 0.5rem 0.75rem 0.75rem; text-align: right; color: var(--editor-gutter); user-select: none; overflow: hidden; white-space: pre; font-variant-numeric: tabular-nums; }
+.editor textarea {
+  font: inherit; color: inherit; background: transparent; border: 0; resize: none; outline: none;
+  padding: 0.75rem 0.9rem 0.75rem 0.4rem; width: 100%; min-height: 320px; max-height: 65vh;
+  white-space: pre; overflow: auto; tab-size: 2; caret-color: var(--brass-bright);
+}
+.editor textarea::selection { background: var(--editor-sel); }
+.editor:focus-within { box-shadow: 0 0 0 3px var(--brass-bright); }
+.editor-help { font-size: 0.8rem; color: var(--muted); }
+
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.9rem; }
+@media (max-width: 640px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.box { border: 1px solid var(--rule); border-radius: 10px; background: var(--panel); min-width: 0; display: flex; flex-direction: column; }
+.box-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.box-body { padding: 0.8rem; min-height: 140px; overflow-x: auto; }
+
+/* The preview renders the student's own markup, with plain readable defaults */
+.preview { background: #ffffff; color: #1c232b; border-radius: 0 0 10px 10px; }
+.preview h1 { font-size: 1.6rem; margin: 0 0 0.4rem; }
+.preview p { margin: 0 0 0.5rem; }
+.preview ul { margin: 0.2rem 0 0.5rem; padding-left: 1.3rem; }
+.preview button { border: 1px solid #8a96a3; background: #f1f3f5; color: #1c232b; border-radius: 6px; padding: 0.3rem 0.8rem; margin: 0 0.3rem 0.3rem 0; }
+.preview input[type="text"], .preview input:not([type]) { font: inherit; border: 1px solid #8a96a3; border-radius: 6px; padding: 0.3rem 0.5rem; margin-bottom: 0.5rem; color: #1c232b; background: #ffffff; }
+.preview .demo-label { font-family: var(--font-mono); font-size: 0.72rem; color: #6b7682; text-transform: uppercase; letter-spacing: 0.08em; margin: 0.4rem 0 0.2rem; }
+.preview .demo-note { font-family: var(--font-mono); font-size: 0.82rem; color: #6b4a10; background: #fbf1dc; padding: 0.3rem 0.5rem; border-radius: 4px; }
+.preview .demo-toggle { display: flex; gap: 0.4rem; align-items: center; font-family: var(--font-mono); font-size: 0.8rem; color: #6b4a10; background: #fbf1dc; padding: 0.3rem 0.5rem; border-radius: 4px; margin-bottom: 0.6rem; }
+.preview .empty { color: #6b7682; font-style: italic; }
+.preview .crash { color: #9c1c14; font-family: var(--font-mono); font-size: 0.85rem; white-space: pre-wrap; }
+
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+.checks li { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); gap: 0.4rem; align-items: start; }
+.mark { width: 1.3rem; height: 1.3rem; border-radius: 50%; display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; margin-top: 0.1rem; }
+.checks li.ok .mark { background: var(--ok-soft); color: var(--ok); }
+.checks li.bad .mark { background: var(--bad-soft); color: var(--bad); }
+.checks li.wait .mark { background: var(--panel-2); color: var(--muted); border: 1px solid var(--rule); }
+.checks .why { display: block; font-size: 0.88rem; color: var(--bad); margin-top: 0.1rem; }
+.summary { font-weight: 700; }
+.errorbox { font-family: var(--font-mono); font-size: 0.82rem; white-space: pre-wrap; background: var(--bad-soft); color: var(--bad); border-radius: 8px; padding: 0.6rem 0.75rem; overflow-x: auto; }
+.muted { color: var(--muted); }
+
+/* Unlock banner */
+.unlock { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; border: 2px solid var(--brass-bright); background: var(--brass-soft); border-radius: 12px; padding: 0.9rem 1.1rem; }
+.unlock .stamp { font-family: var(--font-display); font-size: clamp(1.4rem, 4vw, 2rem); text-transform: uppercase; color: var(--brass); line-height: 1; }
+.unlock.pop { animation: pop 0.5s ease-out; }
+@keyframes pop { 0% { transform: scale(0.96); opacity: 0.3; } 100% { transform: scale(1); opacity: 1; } }
+
+/* Finale */
+.finale { display: flex; flex-direction: column; gap: 0.7rem; border: 2px solid var(--brass-bright); }
+.finale h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 5vw, 2.6rem); text-transform: uppercase; color: var(--brass); line-height: 1; }
+.skills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+footer { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rule); padding-top: 0.9rem; }
+.confirm { display: inline-flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .door.spin .dial, .unlock.pop { animation: none; }
+}
+.offscreen { position: absolute; left: -10000px; top: 0; width: 600px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">React practice game</span>
+      <h1>The React Vault</h1>
+      <p>Thirteen vaults. Each one opens when your component passes every check.</p>
+    </div>
+    <div class="tally" aria-live="polite">
+      <span><strong id="tally-num">0</strong> <span class="muted">of <span id="tally-total">13</span> vaults open</span></span>
+      <div class="bars" id="tally-bars" aria-hidden="true"></div>
+    </div>
+  </header>
+
+  <nav class="doors" id="doors" aria-label="Vaults"></nav>
+
+  <div id="unlock-slot"></div>
+  <section class="panel finale" id="finale" hidden></section>
+
+  <div class="main">
+    <section class="panel brief" id="brief" aria-live="polite"></section>
+
+    <section class="bench" aria-label="Workbench">
+      <div class="toolbar">
+        <span class="filename" id="filename">Vault1.jsx</span>
+        <div class="right">
+          <button class="btn quiet" id="btn-reset" type="button">Reset code</button>
+          <button class="btn" id="btn-run" type="button">Run</button>
+          <button class="btn primary" id="btn-check" type="button">Check</button>
+        </div>
+      </div>
+      <div class="editor">
+        <div class="gutter" id="gutter" aria-hidden="true">1</div>
+        <textarea id="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Your code"></textarea>
+      </div>
+      <p class="editor-help">Tab adds two spaces. To leave the editor with the keyboard, press Esc, then Tab. <span class="kbd">Ctrl+Enter</span> or <span class="kbd">⌘+Enter</span> runs the checks.</p>
+
+      <div class="split">
+        <div class="box">
+          <div class="box-head"><span>Preview</span><span id="preview-tag" class="muted"></span></div>
+          <div class="box-body preview" id="preview"><p class="empty">Press Run to see your component.</p></div>
+        </div>
+        <div class="box">
+          <div class="box-head"><span>Checks</span><span id="check-tag"></span></div>
+          <div class="box-body" id="results"><p class="muted">Press Check to test your component.</p></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <span>Your progress and code are saved in this browser.</span>
+    <span class="confirm" id="reset-area"><button class="btn quiet" id="btn-reset-all" type="button">Reset all progress</button></span>
+  </footer>
+</div>
+
+<div class="offscreen" id="test-area" aria-hidden="true"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+
+  if (!window.React || !window.ReactDOM || !window.Babel) {
+    $("results").innerHTML = '<div class="errorbox">The game could not load React or its code compiler. Check your internet connection and reload the page.</div>';
+    return;
+  }
+  const h = React.createElement;
+
+  /* ---------- Practice data (same shape as DummyJSON) ---------- */
+  const CATALOG = [
+    { id: 1, title: "Essence Mascara Lash Princess" },
+    { id: 2, title: "Eyeshadow Palette with Mirror" },
+    { id: 3, title: "Powder Canister" },
+    { id: 4, title: "Red Lipstick" },
+    { id: 5, title: "Red Nail Polish" },
+    { id: 6, title: "iPhone 13 Pro" },
+    { id: 7, title: "iPhone X" },
+    { id: 8, title: "Samsung Galaxy S8" },
+    { id: 9, title: "Apple AirPods" },
+    { id: 10, title: "Phone Stand" },
+    { id: 11, title: "Gaming Laptop" },
+    { id: 12, title: "Desk Lamp" }
+  ];
+  const realFetch = window.fetch ? window.fetch.bind(window) : null;
+  function okResponse(body) {
+    return { ok: true, status: 200, json: () => Promise.resolve(JSON.parse(JSON.stringify(body))), text: () => Promise.resolve(JSON.stringify(body)) };
+  }
+  function errorResponse(status) {
+    return { ok: false, status, json: () => Promise.resolve({ message: "Server error" }), text: () => Promise.resolve("Server error") };
+  }
+  function queryOf(url) {
+    try { return new URL(url, location.href).searchParams.get("q") || ""; } catch (e) { return ""; }
+  }
+  let previewFails = false;
+  // In the preview, requests to DummyJSON get practice data, because the page cannot reach other sites.
+  window.fetch = function (url, opts) {
+    const u = String(url);
+    if (u.includes("dummyjson.com")) {
+      if (previewFails) return new Promise((_, reject) => setTimeout(() => reject(new TypeError("Failed to fetch")), 600));
+      let products = CATALOG.slice(0, 5);
+      if (u.includes("/products/search")) {
+        const q = queryOf(u).toLowerCase();
+        products = CATALOG.filter((p) => p.title.toLowerCase().includes(q));
+      }
+      return new Promise((resolve) => setTimeout(() => resolve(okResponse({ products, total: products.length, skip: 0, limit: products.length })), 600));
+    }
+    return realFetch ? realFetch(url, opts) : Promise.reject(new Error("fetch is not available"));
+  };
+
+  /* ---------- Helpers used by the checks ---------- */
+  const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
+  const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+  async function waitFor(fn, timeout = 1500) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      try { if (fn()) return true; } catch (e) { /* keep waiting */ }
+      await tick(25);
+    }
+    return !!fn();
+  }
+  function fail(msg) { throw new Error(msg); }
+  function textsOf(host, sel) { return Array.from(host.querySelectorAll(sel)).map((el) => norm(el.textContent)); }
+  function hasText(host, text, sel = "*") { return textsOf(host, sel).includes(text); }
+  function findButton(host, label) { return Array.from(host.querySelectorAll("button")).find((b) => norm(b.textContent) === label); }
+  function setInput(input, value) {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+    setter.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function describeTexts(host, sel) {
+    const t = textsOf(host, sel).filter(Boolean);
+    return t.length ? t.map((x) => '"' + x + '"').join(", ") : "nothing";
+  }
+  const LOADING = /^Loading(\.\.\.|…)$/;
+
+  /* ---------- Compiling the student's code ---------- */
+  function reactFor(log) {
+    const createElement = function (type, props) {
+      const children = Array.prototype.slice.call(arguments, 2);
+      if (log) {
+        if (typeof type === "function" && type.name) log.types.push(type.name);
+        for (const c of children) {
+          if (Array.isArray(c)) {
+            for (const el of c) if (React.isValidElement(el) && el.key == null) log.missing = true;
+          }
+        }
+      }
+      return React.createElement.apply(null, arguments);
+    };
+    return Object.assign({}, React, { createElement });
+  }
+
+  function evaluate(code, args) {
+    try {
+      return new Function("require", "module", "exports", "React", code).apply(null, args);
+    } catch (e) {
+      const cspBlocked = e instanceof EvalError || /unsafe-eval|Content Security|Refused to evaluate/i.test(String(e && e.message));
+      if (!cspBlocked) throw e;
+      return evaluateWithScript(code, args);
+    }
+  }
+  function evaluateWithScript(code, args) {
+    let caught = null;
+    const onErr = (ev) => { caught = ev.error || new Error(ev.message); ev.preventDefault(); };
+    window.addEventListener("error", onErr);
+    window.__vaultArgs = args;
+    const s = document.createElement("script");
+    s.textContent = "(function(require, module, exports, React){\n" + code + "\n}).apply(null, window.__vaultArgs);";
+    document.head.appendChild(s);
+    s.remove();
+    window.removeEventListener("error", onErr);
+    delete window.__vaultArgs;
+    if (caught) throw caught;
+  }
+
+  class CodeError extends Error {
+    constructor(title, detail) { super(title); this.title = title; this.detail = detail; }
+  }
+
+  function compile(src, log) {
+    let out;
+    try {
+      out = Babel.transform(src, {
+        presets: [["react", { runtime: "classic" }]],
+        plugins: ["transform-modules-commonjs"],
+        filename: "Vault.jsx",
+        sourceType: "module"
+      }).code;
+    } catch (e) {
+      const msg = String(e.message || e).replace(/^\/?Vault\.jsx:\s*/, "");
+      throw new CodeError("Your code has a syntax error", msg);
+    }
+    const R = reactFor(log);
+    const module = { exports: {} };
+    const req = (name) => {
+      if (name === "react") return Object.assign({}, R, { default: R, __esModule: true });
+      throw new CodeError("Unsupported import", 'This game can only import from "react", not "' + name + '".');
+    };
+    try {
+      evaluate(out, [req, module, module.exports, R]);
+    } catch (e) {
+      if (e instanceof CodeError) throw e;
+      throw new CodeError("Your code stopped with an error", String(e && e.message || e));
+    }
+    const C = module.exports.default;
+    if (typeof C !== "function") {
+      throw new CodeError("No component found", 'Keep "export default" in front of your main function, so the vault can find your component.');
+    }
+    return C;
+  }
+
+  /* ---------- Mounting a component for a check ---------- */
+  class Boundary extends React.Component {
+    constructor(p) { super(p); this.state = { error: null }; }
+    static getDerivedStateFromError(error) { return { error }; }
+    componentDidCatch(error) { if (this.props.onError) this.props.onError(error); }
+    render() {
+      if (this.state.error) {
+        return this.props.showError ? h("p", { className: "crash" }, "Your component crashed: " + (this.state.error.message || this.state.error)) : null;
+      }
+      return this.props.children;
+    }
+  }
+
+  function makeCtx(src) {
+    const mounted = [];
+    const ctx = {
+      log: { missing: false, types: [] },
+      firstError: null,
+      crashHint: "",
+      mount(props) {
+        const C = compile(src, ctx.log);
+        const host = document.createElement("div");
+        $("test-area").appendChild(host);
+        const root = ReactDOM.createRoot(host);
+        const m = { host, root, error: null };
+        ReactDOM.flushSync(() => {
+          root.render(h(Boundary, { onError: (e) => { m.error = e; if (!ctx.firstError) ctx.firstError = e; } }, h(C, props || {})));
+        });
+        mounted.push(m);
+        if (m.error) fail("Your component crashed: " + (m.error.message || m.error));
+        return m;
+      },
+      crash() {
+        const err = ctx.firstError;
+        if (!err) return null;
+        let msg = "Your component crashed: " + (err.message || err) + ".";
+        if (/Objects are not valid as a React child/.test(msg)) msg = "Your component crashed: it tried to show a whole object. JSX can show text and numbers, not objects. Show one part of the object instead, such as product.title.";
+        else if (ctx.crashHint) msg += " " + ctx.crashHint;
+        else if (/\.map is not a function|Cannot read properties of undefined \(reading 'map'\)/.test(msg)) msg += " Make sure you're mapping over a list, such as data.products.";
+        return msg;
+      },
+      cleanup() {
+        for (const m of mounted) { try { m.root.unmount(); } catch (e) {} m.host.remove(); }
+        mounted.length = 0;
+      }
+    };
+    return ctx;
+  }
+
+  // mode: "ok" sends the products, "reject" fails the network request, "500" answers with a server error.
+  // products can be a list, or a function of the search text.
+  async function withFetchMock(products, fn, mode = "ok") {
+    const before = window.fetch;
+    const calls = [];
+    window.fetch = (url) => {
+      calls.push(String(url));
+      return new Promise((resolve, reject) => setTimeout(() => {
+        if (mode === "reject") reject(new TypeError("Failed to fetch"));
+        else if (mode === "500") resolve(errorResponse(500));
+        else {
+          const list = typeof products === "function" ? products(queryOf(String(url))) : products;
+          resolve(okResponse({ products: list, total: list.length, skip: 0, limit: list.length }));
+        }
+      }, 80));
+    };
+    try { return await fn(calls); } finally { window.fetch = before; }
+  }
+
+  const TREASURE = [
+    { id: 11, title: "Gold Bar", price: 500 },
+    { id: 12, title: "Diamond Ring", price: 300 },
+    { id: 13, title: "Old Map", price: 100 }
+  ];
+
+  /* ---------- The vaults ---------- */
+  const LEVELS = [
+    {
+      name: "The Front Door", component: "VaultSign",
+      story: "Every vault needs a sign over the door. Your first component puts one up.",
+      task: ['Make <code>VaultSign</code> return an <code>&lt;h1&gt;</code> heading.', 'The heading must say exactly:'],
+      expect: "The React Vault",
+      concepts: ["components", "JSX"],
+      hints: [
+        "A component is a function that returns JSX. JSX looks like HTML, written inside JavaScript.",
+        "Replace <code>return null;</code> with <code>return &lt;h1&gt;The React Vault&lt;/h1&gt;;</code>"
+      ],
+      starter:
+`// TODO: return an <h1> with the text "The React Vault" instead of null.
+export default function VaultSign() {
+  return null;
+}
+`,
+      preview: (C) => h(C),
+      checks: [
+        { label: "VaultSign shows an <h1> heading", run: async (ctx) => {
+            const m = ctx.mount();
+            if (!m.host.querySelector("h1")) fail("No <h1> found. Your component shows " + (norm(m.host.textContent) ? '"' + norm(m.host.textContent) + '"' : "nothing") + ".");
+        } },
+        { label: 'The heading says "The React Vault"', run: async (ctx) => {
+            const m = ctx.mount();
+            if (!hasText(m.host, "The React Vault", "h1")) fail("The <h1> says " + describeTexts(m.host, "h1") + ". Check spelling and capital letters.");
+        } }
+      ]
+    },
+    {
+      name: "The Guard Post", component: "AgentBadge",
+      story: "The guard checks every agent's badge. Build the badge from the details you're given.",
+      task: ['<code>AgentBadge</code> receives two props: <code>name</code> and <code>rank</code>.', 'Show them in a <code>&lt;p&gt;</code> tag in this pattern, using the real prop values:'],
+      expect: "Agent Asha, rank 3",
+      concepts: ["props", "{ } in JSX"],
+      hints: [
+        "Receive props by destructuring them in the brackets: <code>function AgentBadge({ name, rank })</code>",
+        "Curly braces put a value into JSX: <code>&lt;p&gt;Agent {name}, rank {rank}&lt;/p&gt;</code>"
+      ],
+      starter:
+`// TODO: receive the name and rank props, then show them in a <p> tag.
+export default function AgentBadge() {
+  return null;
+}
+`,
+      preview: (C) => h("div", null, h("p", { className: "demo-label" }, 'name="Asha" rank={3}'), h(C, { name: "Asha", rank: 3 })),
+      checks: [
+        { label: 'With name "Asha" and rank 3, it shows "Agent Asha, rank 3"', run: async (ctx) => {
+            const m = ctx.mount({ name: "Asha", rank: 3 });
+            if (!hasText(m.host, "Agent Asha, rank 3", "p")) fail("Your <p> tags show " + describeTexts(m.host, "p") + ".");
+        } },
+        { label: "It uses the props, not typed-in values", run: async (ctx) => {
+            const m = ctx.mount({ name: "Ravi", rank: 7 });
+            if (!hasText(m.host, "Agent Ravi, rank 7", "p")) fail('With name "Ravi" and rank 7, the badge shows ' + describeTexts(m.host, "p") + '. Use {name} and {rank} instead of typing the values.');
+        } }
+      ]
+    },
+    {
+      name: "The Gold Room", component: "GoldList",
+      story: "The gold room keeps a list of everything inside. Show the list, whatever is in it.",
+      task: ['<code>GoldList</code> receives one prop: <code>items</code>, a list of strings.', 'Show each item as an <code>&lt;li&gt;</code> inside one <code>&lt;ul&gt;</code>.', 'Give every <code>&lt;li&gt;</code> a <code>key</code>. For items ["Gold coin", "Ruby", "Silver ring"] the page shows:'],
+      expect: "• Gold coin\n• Ruby\n• Silver ring",
+      concepts: [".map()", "key"],
+      hints: [
+        "Inside the <code>&lt;ul&gt;</code>, turn each item into an <code>&lt;li&gt;</code> with <code>{items.map((item) =&gt; &lt;li&gt;{item}&lt;/li&gt;)}</code>",
+        "React needs a key that is different for each item. Here the item itself works: <code>&lt;li key={item}&gt;{item}&lt;/li&gt;</code>"
+      ],
+      starter:
+`// TODO: receive the items prop, then show one <li> per item inside a <ul>.
+export default function GoldList() {
+  return null;
+}
+`,
+      preview: (C) => h(C, { items: ["Gold coin", "Ruby", "Silver ring"] }),
+      checks: [
+        { label: "It shows one <ul>", run: async (ctx) => {
+            const m = ctx.mount({ items: ["Gold coin", "Ruby", "Silver ring"] });
+            const n = m.host.querySelectorAll("ul").length;
+            if (n !== 1) fail("Found " + n + " <ul> elements. There should be exactly one.");
+        } },
+        { label: "Each item is an <li>, in order", run: async (ctx) => {
+            const m = ctx.mount({ items: ["Gold coin", "Ruby", "Silver ring"] });
+            if (textsOf(m.host, "ul li").join("|") !== "Gold coin|Ruby|Silver ring") fail("The list shows " + describeTexts(m.host, "ul li") + '. Expected "Gold coin", "Ruby", "Silver ring".');
+        } },
+        { label: "It works for any list", run: async (ctx) => {
+            const m = ctx.mount({ items: ["Emerald", "Crown"] });
+            if (textsOf(m.host, "ul li").join("|") !== "Emerald|Crown") fail('With items ["Emerald", "Crown"], the list shows ' + describeTexts(m.host, "ul li") + ". Use the items prop instead of typing the items.");
+        } },
+        { label: "Every <li> has a key", run: async (ctx) => {
+            ctx.mount({ items: ["Gold coin", "Ruby", "Silver ring"] });
+            if (ctx.log.missing) fail("At least one <li> made by .map() has no key. Add key={item} to the <li>.");
+        } }
+      ]
+    },
+    {
+      name: "The Door", component: "DoorStatus",
+      story: "The big door is sometimes open, sometimes locked. The sign should always tell the truth.",
+      task: ['<code>DoorStatus</code> receives one prop: <code>isOpen</code>, which is <code>true</code> or <code>false</code>.', 'Show the right message in a <code>&lt;p&gt;</code> tag:'],
+      expect: "isOpen true   →  The door is open\nisOpen false  →  The door is locked",
+      concepts: ["? :", "if / else"],
+      hints: [
+        "You can choose between two values with <code>condition ? valueIfTrue : valueIfFalse</code>",
+        "Try <code>&lt;p&gt;{isOpen ? \"The door is open\" : \"The door is locked\"}&lt;/p&gt;</code>"
+      ],
+      starter:
+`// TODO: receive the isOpen prop, then show the right message.
+export default function DoorStatus() {
+  return null;
+}
+`,
+      preview: (C) => h("div", null,
+        h("p", { className: "demo-label" }, "isOpen={true}"), h(C, { isOpen: true }),
+        h("p", { className: "demo-label" }, "isOpen={false}"), h(C, { isOpen: false })),
+      checks: [
+        { label: 'When isOpen is true, it shows "The door is open"', run: async (ctx) => {
+            const m = ctx.mount({ isOpen: true });
+            if (!hasText(m.host, "The door is open", "p")) fail("With isOpen true, your <p> tags show " + describeTexts(m.host, "p") + ".");
+        } },
+        { label: 'When isOpen is false, it shows "The door is locked"', run: async (ctx) => {
+            const m = ctx.mount({ isOpen: false });
+            if (!hasText(m.host, "The door is locked", "p")) fail("With isOpen false, your <p> tags show " + describeTexts(m.host, "p") + ".");
+        } }
+      ]
+    },
+    {
+      name: "The Price Tags", component: "PriceTags",
+      story: "Each treasure has a price tag. This time every item is an object with several details.",
+      task: ['<code>PriceTags</code> receives one prop: <code>products</code>, a list of objects like <code>{ id: 11, title: "Gold Bar", price: 500 }</code>.', 'Show each product as an <code>&lt;li&gt;</code> inside a <code>&lt;ul&gt;</code>, in this pattern:'],
+      expect: "• Gold Bar: $500\n• Diamond Ring: $300\n• Old Map: $100",
+      concepts: ["objects", "product.title", "key={product.id}"],
+      hints: [
+        "Each product is an object. Read its parts with a dot: <code>product.title</code> and <code>product.price</code>. Use <code>product.id</code> as the key.",
+        "<code>&lt;li key={product.id}&gt;{product.title}: ${product.price}&lt;/li&gt;</code> The <code>$</code> is plain text, and <code>{product.price}</code> is the number."
+      ],
+      starter:
+`// TODO: receive the products prop, then show one <li> per product
+// in the pattern  Gold Bar: $500
+export default function PriceTags() {
+  return null;
+}
+`,
+      preview: (C) => h(C, { products: TREASURE }),
+      checks: [
+        { label: "Each product is an <li> with its title and price", run: async (ctx) => {
+            const m = ctx.mount({ products: TREASURE });
+            const got = textsOf(m.host, "ul li").join("|");
+            if (got !== "Gold Bar: $500|Diamond Ring: $300|Old Map: $100") fail("The list shows " + describeTexts(m.host, "ul li") + '. Expected "Gold Bar: $500", "Diamond Ring: $300", "Old Map: $100".');
+        } },
+        { label: "It works for other products", run: async (ctx) => {
+            const m = ctx.mount({ products: [{ id: 21, title: "Crown", price: 900 }] });
+            if (textsOf(m.host, "ul li").join("|") !== "Crown: $900") fail('With one product, Crown at 900, the list shows ' + describeTexts(m.host, "ul li") + ". Use product.title and product.price from the prop.");
+        } },
+        { label: "Every <li> has a key", run: async (ctx) => {
+            ctx.mount({ products: TREASURE });
+            if (ctx.log.missing) fail("At least one <li> has no key. Use key={product.id}.");
+        } }
+      ]
+    },
+    {
+      name: "The Display Case", component: "ProductList",
+      story: "The display case is built from smaller cases, one per treasure. Build the small case once and reuse it.",
+      task: ['In the same file, write a <code>ProductCard</code> component. It receives <code>title</code> and <code>price</code> and returns an <code>&lt;li&gt;</code> like <code>Gold Bar: $500</code>.', 'Write <code>ProductList</code>. It receives <code>products</code> and returns a <code>&lt;ul&gt;</code> with one <code>&lt;ProductCard /&gt;</code> per product.', 'Only <code>ProductList</code> is the <code>export default</code>. The page shows:'],
+      expect: "• Gold Bar: $500\n• Diamond Ring: $300\n• Old Map: $100",
+      concepts: ["components inside components", "passing props down"],
+      hints: [
+        "Write <code>function ProductCard({ title, price }) { ... }</code> above <code>ProductList</code>. Then use it like a tag: <code>&lt;ProductCard title=\"Gold Bar\" price={500} /&gt;</code>",
+        "<code>{products.map((p) =&gt; &lt;ProductCard key={p.id} title={p.title} price={p.price} /&gt;)}</code>"
+      ],
+      starter:
+`// TODO: write a ProductCard component that receives title and price
+// and returns one <li>.
+
+
+// TODO: show one <ProductCard /> for each product, inside a <ul>.
+export default function ProductList() {
+  return null;
+}
+`,
+      preview: (C) => h(C, { products: TREASURE }),
+      checks: [
+        { label: "It shows every product as an <li>", run: async (ctx) => {
+            const m = ctx.mount({ products: TREASURE });
+            const got = textsOf(m.host, "ul li").join("|");
+            if (got !== "Gold Bar: $500|Diamond Ring: $300|Old Map: $100") fail("The list shows " + describeTexts(m.host, "ul li") + '. Expected "Gold Bar: $500", "Diamond Ring: $300", "Old Map: $100".');
+        } },
+        { label: "It uses a ProductCard component for each product", run: async (ctx) => {
+            ctx.mount({ products: TREASURE });
+            const n = ctx.log.types.filter((t) => t === "ProductCard").length;
+            if (n === 0) fail("ProductCard was never used. Write a function called ProductCard and show it with <ProductCard ... /> inside ProductList.");
+            if (n !== TREASURE.length) fail("ProductCard was used " + n + " times for " + TREASURE.length + " products. Use it once per product, inside .map().");
+        } },
+        { label: "Every ProductCard has a key", run: async (ctx) => {
+            ctx.mount({ products: TREASURE });
+            if (ctx.log.missing) fail("Something made by .map() has no key. Put key={p.id} on each <ProductCard />.");
+        } }
+      ]
+    },
+    {
+      name: "The Coin Counter", component: "CoinCounter",
+      story: "The vault counts every coin that goes in. The number has to change on screen as coins are added.",
+      task: ['Show the number of coins in a <code>&lt;p&gt;</code>, starting at 0.', 'Add a <code>&lt;button&gt;</code> with the text <code>Add coin</code>. Each click adds one coin.', 'After two clicks, the page shows:'],
+      expect: "Coins: 2",
+      concepts: ["useState", "onClick"],
+      hints: [
+        "Import it first: <code>import { useState } from \"react\";</code> Then inside the component: <code>const [coins, setCoins] = useState(0);</code>",
+        "Give the button <code>onClick={() =&gt; setCoins(coins + 1)}</code> and show <code>&lt;p&gt;Coins: {coins}&lt;/p&gt;</code>"
+      ],
+      starter:
+`// TODO: import useState from "react".
+
+// TODO: store the coins with useState, show them, and add one on each click.
+export default function CoinCounter() {
+  return null;
+}
+`,
+      preview: (C) => h(C),
+      checks: [
+        { label: 'It starts by showing "Coins: 0"', run: async (ctx) => {
+            const m = ctx.mount();
+            if (!hasText(m.host, "Coins: 0", "p")) fail("Your <p> tags show " + describeTexts(m.host, "p") + ' at the start. Expected "Coins: 0".');
+        } },
+        { label: 'It has a button that says "Add coin"', run: async (ctx) => {
+            const m = ctx.mount();
+            if (!findButton(m.host, "Add coin")) fail('No button with the text "Add coin". Buttons found: ' + describeTexts(m.host, "button") + ".");
+        } },
+        { label: 'One click shows "Coins: 1"', run: async (ctx) => {
+            const m = ctx.mount();
+            const b = findButton(m.host, "Add coin"); if (!b) fail('No "Add coin" button to click.');
+            b.click();
+            const ok = await waitFor(() => hasText(m.host, "Coins: 1", "p"), 600);
+            if (!ok) fail("After one click, your <p> tags show " + describeTexts(m.host, "p") + ". The number must be kept in state and updated with its setter.");
+        } },
+        { label: 'Three clicks show "Coins: 3"', run: async (ctx) => {
+            const m = ctx.mount();
+            const b = findButton(m.host, "Add coin"); if (!b) fail('No "Add coin" button to click.');
+            b.click(); await tick(); b.click(); await tick(); b.click();
+            const ok = await waitFor(() => hasText(m.host, "Coins: 3", "p"), 600);
+            if (!ok) fail("After three clicks, your <p> tags show " + describeTexts(m.host, "p") + ".");
+        } }
+      ]
+    },
+    {
+      name: "The Code Lock", component: "SecretCode",
+      story: "This door has a keypad lock. It opens the moment the right code is typed.",
+      task: ['Show a text <code>&lt;input&gt;</code> and a <code>&lt;p&gt;</code> with a message under it.', 'The message changes as the person types, with no button:'],
+      expect: "Anything else  →  Locked\nExactly REACT  →  Unlocked!",
+      concepts: ["useState", "onChange", "event.target.value"],
+      hints: [
+        "Keep the typed text in state: <code>const [code, setCode] = useState(\"\");</code> and update it with <code>onChange={(e) =&gt; setCode(e.target.value)}</code>",
+        "Then choose the message: <code>{code === \"REACT\" ? \"Unlocked!\" : \"Locked\"}</code>"
+      ],
+      starter:
+`// TODO: import useState from "react".
+
+// TODO: keep what is typed in state, and show "Locked" or "Unlocked!".
+export default function SecretCode() {
+  return null;
+}
+`,
+      preview: (C) => h(C),
+      checks: [
+        { label: "It shows a text input", run: async (ctx) => {
+            const m = ctx.mount();
+            if (!m.host.querySelector("input")) fail("No <input> found.");
+        } },
+        { label: 'It starts by showing "Locked"', run: async (ctx) => {
+            const m = ctx.mount();
+            if (!hasText(m.host, "Locked", "p")) fail("At the start, your <p> tags show " + describeTexts(m.host, "p") + '. Expected "Locked".');
+        } },
+        { label: 'Typing REACT shows "Unlocked!"', run: async (ctx) => {
+            const m = ctx.mount();
+            const input = m.host.querySelector("input"); if (!input) fail("No <input> to type into.");
+            setInput(input, "REACT");
+            const ok = await waitFor(() => hasText(m.host, "Unlocked!", "p"), 600);
+            if (!ok) fail("After typing REACT, your <p> tags show " + describeTexts(m.host, "p") + ". Is the input's value saved in state with onChange?");
+        } },
+        { label: "Other codes stay locked", run: async (ctx) => {
+            const m = ctx.mount();
+            const input = m.host.querySelector("input"); if (!input) fail("No <input> to type into.");
+            for (const attempt of ["REAC", "react", "REACT!"]) {
+              setInput(input, attempt);
+              await tick(30);
+              if (!hasText(m.host, "Locked", "p")) fail('After typing "' + attempt + '", the message is ' + describeTexts(m.host, "p") + '. Only exactly REACT should unlock it.');
+            }
+        } }
+      ]
+    },
+    {
+      name: "The Cart", component: "Cart",
+      story: "Agents pick treasures to carry out. The cart grows with every pick, and the total has to keep up.",
+      task: ['<code>Cart</code> receives <code>products</code>, a list like <code>{ id, title, price }</code>.', 'Show one <code>&lt;button&gt;</code> per product with the text <code>Add</code> and its title, such as <code>Add Gold Bar</code>.', 'Keep the cart as a list in state. Show each item in the cart as an <code>&lt;li&gt;</code> with its title, and the total in a <code>&lt;p&gt;</code>.', 'After adding Gold Bar twice and Old Map once:'],
+      expect: "• Gold Bar\n• Gold Bar\n• Old Map\nTotal: $1100",
+      concepts: ["useState with a list", "[...cart, item]", "objects"],
+      hints: [
+        "Start with an empty list: <code>const [cart, setCart] = useState([]);</code> To add, make a new list with the old items plus the new one: <code>setCart([...cart, product])</code>",
+        "Add up the prices with a loop, or with <code>cart.reduce((sum, p) =&gt; sum + p.price, 0)</code>. Items in the cart can repeat, so use the position as the key: <code>cart.map((p, i) =&gt; &lt;li key={i}&gt;...)</code>"
+      ],
+      starter:
+`// TODO: import useState from "react".
+
+// TODO: show an "Add <title>" button per product, keep the cart as a list
+// in state, show each cart item as an <li>, and show the total.
+export default function Cart() {
+  return null;
+}
+`,
+      preview: (C) => h(C, { products: TREASURE }),
+      checks: [
+        { label: 'It shows a button like "Add Gold Bar" for each product', run: async (ctx) => {
+            const m = ctx.mount({ products: TREASURE });
+            for (const p of TREASURE) if (!findButton(m.host, "Add " + p.title)) fail('No button with the text "Add ' + p.title + '". Buttons found: ' + describeTexts(m.host, "button") + ".");
+        } },
+        { label: 'It starts empty, with "Total: $0"', run: async (ctx) => {
+            const m = ctx.mount({ products: TREASURE });
+            if (m.host.querySelectorAll("li").length) fail("The cart should start empty, but it shows " + describeTexts(m.host, "li") + ".");
+            if (!hasText(m.host, "Total: $0", "p")) fail("Your <p> tags show " + describeTexts(m.host, "p") + ' at the start. Expected "Total: $0".');
+        } },
+        { label: "Adding a product puts it in the cart and updates the total", run: async (ctx) => {
+            const m = ctx.mount({ products: TREASURE });
+            const b = findButton(m.host, "Add Gold Bar"); if (!b) fail('No "Add Gold Bar" button to click.');
+            b.click();
+            const ok = await waitFor(() => textsOf(m.host, "li").join("|") === "Gold Bar" && hasText(m.host, "Total: $500", "p"), 600);
+            if (!ok) fail("After adding Gold Bar, the cart shows " + describeTexts(m.host, "li") + " and the total shows " + describeTexts(m.host, "p") + '. Expected one "Gold Bar" and "Total: $500". Use setCart([...cart, product]) so React sees a new list.');
+        } },
+        { label: "Several picks add up correctly", run: async (ctx) => {
+            const m = ctx.mount({ products: TREASURE });
+            const gold = findButton(m.host, "Add Gold Bar"), map = findButton(m.host, "Add Old Map");
+            if (!gold || !map) fail('The "Add Gold Bar" and "Add Old Map" buttons are needed.');
+            gold.click(); await tick(); gold.click(); await tick(); map.click();
+            const ok = await waitFor(() => textsOf(m.host, "li").join("|") === "Gold Bar|Gold Bar|Old Map" && hasText(m.host, "Total: $1100", "p"), 800);
+            if (!ok) fail("After Gold Bar, Gold Bar, Old Map, the cart shows " + describeTexts(m.host, "li") + " and the total shows " + describeTexts(m.host, "p") + '. Expected 3 items and "Total: $1100".');
+        } },
+        { label: "Every <li> has a key", run: async (ctx) => {
+            const m = ctx.mount({ products: TREASURE });
+            const b = findButton(m.host, "Add Gold Bar"); if (b) { b.click(); await tick(); b.click(); await tick(30); }
+            if (ctx.log.missing) fail("Something made by .map() has no key. The buttons can use key={p.id}; the cart items can use the position, key={i}.");
+        } }
+      ]
+    },
+    {
+      name: "The Keypad", component: "Keypad",
+      story: "The keypad only reports which key was pressed. The control room decides what to do with it.",
+      task: ['<code>Keypad</code> receives one prop: <code>onPress</code>, a function.', 'Show three buttons with the text <code>1</code>, <code>2</code> and <code>3</code>.', 'Clicking a button calls <code>onPress</code> with its digit. Clicking 2 runs:'],
+      expect: 'onPress("2")',
+      concepts: ["functions as props", "child to parent"],
+      hints: [
+        "Receive the function like any prop: <code>function Keypad({ onPress })</code>",
+        "Each button calls it with its own digit: <code>&lt;button onClick={() =&gt; onPress(\"1\")}&gt;1&lt;/button&gt;</code>"
+      ],
+      starter:
+`// TODO: receive the onPress prop, show buttons 1, 2 and 3,
+// and call onPress with the digit when a button is clicked.
+export default function Keypad() {
+  return null;
+}
+`,
+      preview: (C) => h(KeypadDemo, { C }),
+      checks: [
+        { label: "It shows buttons 1, 2 and 3", run: async (ctx) => {
+            const m = ctx.mount({ onPress: () => {} });
+            for (const d of ["1", "2", "3"]) if (!findButton(m.host, d)) fail("No button with the text " + d + ". Buttons found: " + describeTexts(m.host, "button") + ".");
+        } },
+        { label: 'Clicking 2 calls onPress("2")', run: async (ctx) => {
+            const calls = [];
+            const m = ctx.mount({ onPress: (d) => calls.push(d) });
+            const b = findButton(m.host, "2"); if (!b) fail("No button 2 to click.");
+            b.click(); await tick();
+            if (calls.length === 0) fail('Clicking 2 didn\'t call onPress. Add onClick={() => onPress("2")} to the button.');
+            if (String(calls[0]) !== "2") fail("Clicking 2 called onPress with " + JSON.stringify(calls[0]) + ' instead of "2".');
+        } },
+        { label: "Each button sends its own digit", run: async (ctx) => {
+            const calls = [];
+            const m = ctx.mount({ onPress: (d) => calls.push(String(d)) });
+            for (const d of ["1", "3"]) { const b = findButton(m.host, d); if (!b) fail("No button " + d + " to click."); b.click(); await tick(); }
+            if (calls.join(",") !== "1,3") fail("Clicking 1 then 3 sent " + (calls.length ? calls.join(" then ") : "nothing") + ".");
+        } }
+      ]
+    },
+    {
+      name: "The Treasure Room", component: "TreasureList",
+      story: "The treasure list lives on a server, so your component has to fetch it.",
+      task: ['When the component first appears, fetch:', '<code>https://dummyjson.com/products?limit=5&amp;select=title</code>', 'While waiting, show a <code>&lt;p&gt;</code> that says <code>Loading...</code>', 'When the data arrives, hide that message and show each product\'s <code>title</code> as an <code>&lt;li&gt;</code> inside a <code>&lt;ul&gt;</code>. The list is in <code>data.products</code>.'],
+      expect: "Loading...\n   then\n• Essence Mascara Lash Princess\n• Eyeshadow Palette with Mirror\n• ...",
+      concepts: ["useEffect", "fetch", "loading state"],
+      hints: [
+        "Fetch once, inside <code>useEffect(() =&gt; { ... }, [])</code>. The empty <code>[]</code> means: only when the component first appears.",
+        "<code>fetch(url).then((res) =&gt; res.json()).then((data) =&gt; { setProducts(data.products); setLoading(false); });</code>"
+      ],
+      starter:
+`// TODO: import useState and useEffect from "react".
+
+// TODO: fetch the products once, then show "Loading..." or the list of titles.
+export default function TreasureList() {
+  return null;
+}
+`,
+      preview: (C) => h("div", null, h(C), h("p", { className: "demo-note" }, "Practice data: this page can't reach DummyJSON, so it answers with sample products in the same shape.")),
+      checks: [
+        { label: 'It shows "Loading..." first', run: async (ctx) => {
+            await withFetchMock([{ id: 1, title: "Gold Bar" }], async () => {
+              const m = ctx.mount();
+              if (!textsOf(m.host, "p").some((x) => LOADING.test(x))) fail("Before the data arrives, your <p> tags show " + describeTexts(m.host, "p") + '. Expected "Loading...".');
+              ctx.cleanup();
+            });
+        } },
+        { label: "It fetches from dummyjson.com/products", run: async (ctx) => {
+            await withFetchMock([{ id: 1, title: "Gold Bar" }], async (calls) => {
+              ctx.mount();
+              await waitFor(() => calls.length > 0, 600);
+              if (calls.length === 0) fail("fetch was never called. Call it inside useEffect.");
+              if (!calls[0].includes("dummyjson.com/products")) fail("fetch was called with " + calls[0] + ".");
+              ctx.cleanup();
+            });
+        } },
+        { label: "It shows every title as an <li>", run: async (ctx) => {
+            await withFetchMock(TREASURE, async () => {
+              const m = ctx.mount();
+              const ok = await waitFor(() => textsOf(m.host, "ul li").join("|") === "Gold Bar|Diamond Ring|Old Map", 1500);
+              if (!ok) fail("With 3 products, the list shows " + describeTexts(m.host, "ul li") + ". The list is in data.products and each title is product.title.");
+              ctx.cleanup();
+            });
+        } },
+        { label: 'It hides "Loading..." when the data arrives', run: async (ctx) => {
+            await withFetchMock([{ id: 1, title: "Gold Bar" }], async () => {
+              const m = ctx.mount();
+              await waitFor(() => textsOf(m.host, "li").includes("Gold Bar"), 1500);
+              await tick(50);
+              if (textsOf(m.host, "*").some((x) => LOADING.test(x))) fail('"Loading..." is still showing after the data arrived. Set loading to false when the products are saved.');
+              ctx.cleanup();
+            });
+        } },
+        { label: "It fetches only once", run: async (ctx) => {
+            await withFetchMock([{ id: 1, title: "Gold Bar" }], async (calls) => {
+              ctx.mount();
+              await tick(500);
+              if (calls.length !== 1) fail("fetch ran " + calls.length + " times. Give useEffect an empty list [] as its second argument so it runs once.");
+              ctx.cleanup();
+            });
+        } }
+      ]
+    },
+    {
+      name: "The Alarm", component: "SafeTreasureList",
+      story: "Servers fail. When they do, the vault must say so clearly instead of breaking or loading forever.",
+      task: ['Fetch <code>https://dummyjson.com/products?limit=5&amp;select=title</code> using <code>async</code> and <code>await</code>.', 'Show <code>Loading...</code> while waiting, then the titles as <code>&lt;li&gt;</code> items, as in the last vault.', 'If the request fails, or the server answers with an error (when <code>res.ok</code> is false), hide <code>Loading...</code> and show a <code>&lt;p&gt;</code>:'],
+      expect: "Could not load products",
+      concepts: ["async / await", "try / catch", "res.ok"],
+      hints: [
+        "<code>useEffect</code> can't be async itself, so write an async function inside it and call it: <code>async function load() { ... } load();</code>",
+        "Inside <code>load</code>: <code>try { const res = await fetch(url); if (!res.ok) throw new Error(\"Bad response\"); const data = await res.json(); ... } catch (err) { setError(true); }</code> Then show the message when <code>error</code> is true."
+      ],
+      starter:
+`// TODO: import useState and useEffect from "react".
+
+// TODO: fetch with async/await. Show "Loading...", then the titles,
+// or "Could not load products" if anything goes wrong.
+export default function SafeTreasureList() {
+  return null;
+}
+`,
+      preview: (C) => h(FailDemo, { C }),
+      checks: [
+        { label: "It uses async and await", run: async (ctx, src) => {
+            if (!/\basync\b/.test(src) || !/\bawait\b/.test(src)) fail("This vault practises async and await. Use await fetch(...) inside an async function.");
+        } },
+        { label: "When the data arrives, it shows the titles", run: async (ctx) => {
+            await withFetchMock(TREASURE, async () => {
+              const m = ctx.mount();
+              const ok = await waitFor(() => textsOf(m.host, "ul li").join("|") === "Gold Bar|Diamond Ring|Old Map", 1500);
+              if (!ok) fail("With 3 products, the list shows " + describeTexts(m.host, "ul li") + ".");
+              ctx.cleanup();
+            });
+        } },
+        { label: 'If the network fails, it shows "Could not load products"', run: async (ctx) => {
+            ctx.crashHint = "Wrap the fetch in try/catch so a failed request doesn't break the component.";
+            await withFetchMock([], async () => {
+              const m = ctx.mount();
+              const ok = await waitFor(() => hasText(m.host, "Could not load products", "p"), 1500);
+              if (!ok) fail("When the request failed, your component shows " + describeTexts(m.host, "p") + ". Catch the error with try/catch and show the message.");
+              ctx.cleanup();
+            }, "reject");
+        } },
+        { label: "If the server answers with an error, it shows the message too", run: async (ctx) => {
+            ctx.crashHint = "When the server answers with an error, check res.ok before using the data.";
+            await withFetchMock([], async () => {
+              const m = ctx.mount();
+              const ok = await waitFor(() => hasText(m.host, "Could not load products", "p"), 1500);
+              if (!ok) fail("When the server answered with status 500, your component shows " + describeTexts(m.host, "p") + ". Check res.ok, and throw an error when it is false.");
+              ctx.cleanup();
+            }, "500");
+        } },
+        { label: 'It hides "Loading..." after an error', run: async (ctx) => {
+            await withFetchMock([], async () => {
+              const m = ctx.mount();
+              await waitFor(() => hasText(m.host, "Could not load products", "p"), 1500);
+              await tick(50);
+              if (textsOf(m.host, "*").some((x) => LOADING.test(x))) fail('"Loading..." is still showing after the error. Set loading to false in the catch block too.');
+              ctx.cleanup();
+            }, "reject");
+        } }
+      ]
+    },
+    {
+      name: "The Search Vault", component: "ProductSearch",
+      story: "The final vault. Its search box asks the server again every time the search changes.",
+      task: ['Show a text <code>&lt;input&gt;</code>. Keep what is typed in state.', 'Whenever the text changes, fetch the matching products, putting the text after <code>q=</code>:', '<code>https://dummyjson.com/products/search?q=</code> + the text', 'Show each result\'s <code>title</code> as an <code>&lt;li&gt;</code> inside a <code>&lt;ul&gt;</code>. Typing <code>phone</code> shows:'],
+      expect: "• iPhone 13 Pro\n• iPhone X\n• Phone Stand",
+      concepts: ["useEffect dependencies", "[query]", "template strings"],
+      hints: [
+        "Put the search text in the dependency list: <code>useEffect(() =&gt; { ... }, [query]);</code> React runs the effect again whenever <code>query</code> changes.",
+        "Build the URL with a template string: <code>fetch(`https://dummyjson.com/products/search?q=${query}`)</code>, then save <code>data.products</code> in state."
+      ],
+      starter:
+`// TODO: import useState and useEffect from "react".
+
+// TODO: keep the search text in state, fetch the matching products
+// whenever it changes, and show their titles.
+export default function ProductSearch() {
+  return null;
+}
+`,
+      preview: (C) => h("div", null, h(C), h("p", { className: "demo-note" }, 'Practice data: try "phone", "red" or "lamp".')),
+      checks: [
+        { label: "It shows a text input", run: async (ctx) => {
+            await withFetchMock(searchMock, async () => {
+              const m = ctx.mount();
+              if (!m.host.querySelector("input")) fail("No <input> found.");
+              ctx.cleanup();
+            });
+        } },
+        { label: "Typing fetches the search URL with the text", run: async (ctx) => {
+            await withFetchMock(searchMock, async (calls) => {
+              const m = ctx.mount();
+              const input = m.host.querySelector("input"); if (!input) fail("No <input> to type into.");
+              await tick(50);
+              setInput(input, "phone");
+              const ok = await waitFor(() => calls.some((c) => c.includes("products/search") && /[?&]q=phone\b/.test(c)), 1000);
+              if (!ok) fail(calls.length ? "After typing phone, fetch was called with: " + calls.join(", ") + ". Expected a URL ending in search?q=phone." : "fetch was never called. Fetch inside useEffect, with the search text in the dependency list.");
+              ctx.cleanup();
+            });
+        } },
+        { label: "It shows the results for what was typed", run: async (ctx) => {
+            await withFetchMock(searchMock, async () => {
+              const m = ctx.mount();
+              const input = m.host.querySelector("input"); if (!input) fail("No <input> to type into.");
+              await tick(50);
+              setInput(input, "phone");
+              const ok = await waitFor(() => textsOf(m.host, "ul li").join("|") === "Smart Phone|Phone Case", 1500);
+              if (!ok) fail('After typing phone, the list shows ' + describeTexts(m.host, "ul li") + '. Expected "Smart Phone", "Phone Case".');
+              setInput(input, "gold");
+              const ok2 = await waitFor(() => textsOf(m.host, "ul li").join("|") === "Gold Bar", 1500);
+              if (!ok2) fail('After changing the search to gold, the list shows ' + describeTexts(m.host, "ul li") + '. It should fetch again and show "Gold Bar".');
+              ctx.cleanup();
+            });
+        } },
+        { label: "It fetches only when the text changes", run: async (ctx) => {
+            await withFetchMock(searchMock, async (calls) => {
+              const m = ctx.mount();
+              const input = m.host.querySelector("input"); if (!input) fail("No <input> to type into.");
+              await tick(300);
+              const before = calls.length;
+              setInput(input, "phone");
+              await tick(600);
+              const extra = calls.length - before;
+              if (before > 1 || extra > 1) fail("fetch ran " + calls.length + " times for one search. Use [query] as the dependency list, so it only runs when the text changes.");
+              if (extra === 0) fail("Changing the text didn't fetch again. Put the search text in the dependency list: [query].");
+              ctx.cleanup();
+            });
+        } },
+        { label: "Every <li> has a key", run: async (ctx) => {
+            await withFetchMock(searchMock, async () => {
+              const m = ctx.mount();
+              const input = m.host.querySelector("input");
+              if (input) { setInput(input, "phone"); }
+              await waitFor(() => m.host.querySelectorAll("li").length > 0, 1000);
+              if (ctx.log.missing) fail("At least one <li> has no key. Use key={p.id}.");
+              ctx.cleanup();
+            });
+        } }
+      ]
+    }
+  ];
+  LEVELS.forEach((l, i) => { l.id = i + 1; l.file = "Vault" + (i + 1) + ".jsx"; });
+  const TOTAL = LEVELS.length;
+
+  function searchMock(q) {
+    const all = [{ id: 31, title: "Smart Phone" }, { id: 32, title: "Phone Case" }, { id: 33, title: "Gold Bar" }, { id: 34, title: "Desk Lamp" }];
+    return all.filter((p) => p.title.toLowerCase().includes(String(q).toLowerCase()));
+  }
+
+  function KeypadDemo({ C }) {
+    const [pressed, setPressed] = React.useState([]);
+    return h("div", null,
+      h(C, { onPress: (d) => setPressed((p) => p.concat(String(d))) }),
+      h("p", { className: "demo-note" }, "The parent received: " + (pressed.length ? pressed.join(" ") : "nothing yet")));
+  }
+
+  function FailDemo({ C }) {
+    const [failing, setFailing] = React.useState(false);
+    const [run, setRun] = React.useState(0);
+    return h("div", null,
+      h("label", { className: "demo-toggle" },
+        h("input", { type: "checkbox", checked: failing, onChange: (e) => { previewFails = e.target.checked; setFailing(e.target.checked); setRun((r) => r + 1); } }),
+        "Make the request fail"),
+      h(Boundary, { key: run, showError: true }, h(C)));
+  }
+
+  /* ---------- Saved progress (this browser only) ---------- */
+  const STORE = "react-vault-v2";
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || null; } catch (e) { return null; }
+  }
+  function save() {
+    try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
+  }
+  const state = Object.assign({ open: [], current: 1, code: {} }, load() || {});
+
+  const isOpen = (id) => state.open.includes(id);
+  const isReachable = (id) => id === 1 || isOpen(id - 1) || isOpen(id);
+  const levelById = (id) => LEVELS.find((l) => l.id === id);
+
+  /* ---------- Rendering the page ---------- */
+  function renderTally() {
+    $("tally-num").textContent = state.open.length;
+    $("tally-total").textContent = TOTAL;
+    $("tally-bars").innerHTML = LEVELS.map((l) => '<span class="' + (isOpen(l.id) ? "on" : "") + '"></span>').join("");
+  }
+
+  function renderDoors(spinId) {
+    $("doors").innerHTML = "";
+    for (const l of LEVELS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      const open = isOpen(l.id), reach = isReachable(l.id), cur = state.current === l.id;
+      b.className = "door" + (open ? " open" : "") + (cur ? " current" : "") + (spinId === l.id ? " spin" : "");
+      b.disabled = !reach;
+      const st = open ? "Open" : reach ? "Ready" : "Locked";
+      b.setAttribute("aria-label", "Vault " + l.id + ": " + l.name + ", " + st.toLowerCase());
+      if (cur) b.setAttribute("aria-current", "step");
+      b.innerHTML = '<span class="dial">' + (open ? "✓" : l.id) + '</span><span class="dname">' + l.name + '</span><span class="dstate">' + st + "</span>";
+      b.addEventListener("click", () => goTo(l.id));
+      $("doors").appendChild(b);
+    }
+  }
+
+  function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+  function renderBrief() {
+    const l = levelById(state.current);
+    $("brief").innerHTML =
+      '<span class="eyebrow">Vault ' + l.id + " of " + TOTAL + (l.id === TOTAL ? " · final vault" : "") + (isOpen(l.id) ? " · open" : "") + "</span>" +
+      "<h2>" + l.name + "</h2>" +
+      '<p class="story">' + l.story + "</p>" +
+      "<h3>Your task</h3>" +
+      '<ul class="task">' + l.task.map((t) => "<li>" + t + "</li>").join("") + "</ul>" +
+      '<div class="expect">' + escapeHtml(l.expect) + "</div>" +
+      '<div class="concepts">' + l.concepts.map((c) => '<span class="chip">' + escapeHtml(c) + "</span>").join("") + "</div>" +
+      "<div>" + l.hints.map((x, i) => '<details class="hint"><summary>Hint ' + (i + 1) + "</summary><p>" + x + "</p></details>").join("") + "</div>" +
+      '<p class="note">Write the same code you would in a Vite project, including <code>import</code> and <code>export default</code>.</p>';
+  }
+
+  const editor = $("code-editor");
+  function updateGutter() {
+    const n = editor.value.split("\n").length;
+    let s = ""; for (let i = 1; i <= n; i++) s += i + "\n";
+    $("gutter").textContent = s;
+    $("gutter").scrollTop = editor.scrollTop;
+  }
+  function loadEditor() {
+    const l = levelById(state.current);
+    editor.value = state.code[l.id] != null ? state.code[l.id] : l.starter;
+    $("filename").textContent = l.file;
+    updateGutter();
+  }
+
+  let previewRoot = null, runCount = 0;
+  function resetPanels() {
+    if (previewRoot) { previewRoot.unmount(); previewRoot = null; }
+    previewFails = false;
+    $("preview").innerHTML = '<p class="empty">Press Run to see your component.</p>';
+    $("preview-tag").textContent = "";
+    $("results").innerHTML = '<p class="muted">Press Check to test your component.</p>';
+    $("check-tag").textContent = "";
+  }
+
+  function goTo(id) {
+    if (!isReachable(id)) return;
+    state.current = id; save();
+    $("unlock-slot").innerHTML = "";
+    renderDoors(); renderBrief(); loadEditor(); resetPanels(); renderFinale();
+  }
+
+  /* ---------- Run (preview) ---------- */
+  function run() {
+    const l = levelById(state.current);
+    let C;
+    try { C = compile(editor.value, null); }
+    catch (e) {
+      if (previewRoot) { previewRoot.unmount(); previewRoot = null; }
+      $("preview").innerHTML = '<div class="errorbox">' + escapeHtml((e.title || "Error") + "\n\n" + (e.detail || e.message)) + "</div>";
+      $("preview-tag").textContent = "error";
+      return;
+    }
+    previewFails = false;
+    if (!previewRoot) { $("preview").innerHTML = ""; previewRoot = ReactDOM.createRoot($("preview")); }
+    runCount++;
+    previewRoot.render(h(Boundary, { key: runCount, showError: true }, l.preview(C)));
+    $("preview-tag").textContent = "run " + runCount;
+  }
+
+  /* ---------- Check ---------- */
+  let checking = false;
+  async function check() {
+    if (checking) return;
+    checking = true;
+    $("btn-check").disabled = true;
+    const l = levelById(state.current);
+    const src = editor.value;
+    state.code[l.id] = src; save();
+    run();
+    try { compile(src, null); }
+    catch (e) {
+      $("results").innerHTML = '<p class="summary" style="color:var(--bad)">' + escapeHtml(e.title || "Error") + '</p><div class="errorbox">' + escapeHtml(e.detail || e.message) + "</div>";
+      $("check-tag").textContent = "0 of " + l.checks.length;
+      checking = false; $("btn-check").disabled = false;
+      return;
+    }
+    const list = document.createElement("ul"); list.className = "checks";
+    const items = l.checks.map((c) => {
+      const li = document.createElement("li"); li.className = "wait";
+      li.innerHTML = '<span class="mark" aria-hidden="true">·</span><span>' + escapeHtml(c.label) + "</span>";
+      list.appendChild(li); return li;
+    });
+    $("results").innerHTML = ""; $("results").appendChild(list);
+    const origError = console.error;
+    let passed = 0;
+    for (let i = 0; i < l.checks.length; i++) {
+      const ctx = makeCtx(src);
+      let ok = true, why = "";
+      console.error = function () {};
+      try {
+        await l.checks[i].run(ctx, src);
+        const crashed = ctx.crash();
+        if (crashed) fail(crashed);
+      } catch (e) {
+        ok = false;
+        const msg = e && e.message ? e.message : String(e);
+        why = ctx.crash() && !/crashed/.test(msg) ? ctx.crash() : msg;
+      } finally { ctx.cleanup(); console.error = origError; }
+      if (ok) passed++;
+      items[i].className = ok ? "ok" : "bad";
+      items[i].innerHTML = '<span class="mark" aria-hidden="true">' + (ok ? "✓" : "✗") + "</span><span>" + escapeHtml(l.checks[i].label) +
+        (ok ? "" : '<span class="why">' + escapeHtml(why) + "</span>") + '<span class="offscreen">' + (ok ? " passed" : " failed") + "</span></span>";
+    }
+    const all = passed === l.checks.length;
+    const sum = document.createElement("p"); sum.className = "summary";
+    sum.textContent = all ? "All checks passed." : passed + " of " + l.checks.length + " checks passed.";
+    sum.style.marginTop = "0.8rem";
+    sum.style.color = all ? "var(--ok)" : "var(--ink)";
+    $("results").appendChild(sum);
+    $("check-tag").textContent = passed + " of " + l.checks.length;
+    if (all) unlock(l);
+    checking = false; $("btn-check").disabled = false;
+  }
+
+  function unlock(l) {
+    const first = !isOpen(l.id);
+    if (first) { state.open.push(l.id); state.open.sort((a, b) => a - b); save(); }
+    renderTally(); renderDoors(l.id); renderBrief();
+    const next = levelById(l.id + 1);
+    const slot = $("unlock-slot");
+    slot.innerHTML = "";
+    const div = document.createElement("div");
+    div.className = "unlock pop";
+    div.setAttribute("role", "status");
+    div.innerHTML = '<div><div class="stamp">Vault ' + l.id + " open</div><p>" + (next ? "Vault " + next.id + ", " + next.name + ", is ready." : "That was the final vault.") + "</p></div>";
+    if (next) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "btn primary"; b.textContent = "Go to Vault " + next.id;
+      b.addEventListener("click", () => goTo(next.id));
+      div.appendChild(b);
+    }
+    slot.appendChild(div);
+    renderFinale();
+    if (!next && first) $("finale").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* ---------- Finale ---------- */
+  function renderFinale() {
+    const f = $("finale");
+    if (state.open.length < TOTAL) { f.hidden = true; f.innerHTML = ""; return; }
+    f.hidden = false;
+    const skills = ["components", "JSX", "props", "lists and keys", "conditions", "objects", "components inside components", "useState", "inputs", "lists in state", "functions as props", "useEffect", "fetch", "async / await", "error handling", "search with [query]"];
+    f.innerHTML =
+      '<span class="eyebrow">All ' + TOTAL + " vaults open</span>" +
+      "<h2>The treasure is yours</h2>" +
+      "<p>You opened every vault in The React Vault. You can go back to any vault to practise it again.</p>" +
+      '<div class="skills">' + skills.map((s) => '<span class="chip">' + escapeHtml(s) + "</span>").join("") + "</div>";
+  }
+
+  /* ---------- Reset ---------- */
+  let resetArm = null;
+  $("btn-reset").addEventListener("click", () => {
+    const b = $("btn-reset");
+    if (!resetArm) {
+      b.textContent = "Click again to reset";
+      resetArm = setTimeout(() => { resetArm = null; b.textContent = "Reset code"; }, 3000);
+      return;
+    }
+    clearTimeout(resetArm); resetArm = null; b.textContent = "Reset code";
+    const l = levelById(state.current);
+    delete state.code[l.id]; save(); loadEditor(); resetPanels();
+  });
+
+  function showResetButton() {
+    $("reset-area").innerHTML = '<button class="btn quiet" id="btn-reset-all" type="button">Reset all progress</button>';
+    $("btn-reset-all").addEventListener("click", askReset);
+  }
+  function askReset() {
+    $("reset-area").innerHTML = '<span>Reset all vaults and code?</span><button class="btn" id="yes-reset" type="button">Yes, reset</button><button class="btn quiet" id="no-reset" type="button">Cancel</button>';
+    $("yes-reset").addEventListener("click", () => {
+      state.open = []; state.current = 1; state.code = {}; save();
+      showResetButton(); $("unlock-slot").innerHTML = ""; renderAll();
+    });
+    $("no-reset").addEventListener("click", showResetButton);
+  }
+  $("btn-reset-all").addEventListener("click", askReset);
+
+  /* ---------- Editor behaviour ---------- */
+  let escFlag = false, saveTimer = null;
+  function insertText(text) {
+    editor.focus();
+    if (!document.execCommand || !document.execCommand("insertText", false, text)) {
+      const s = editor.selectionStart, e = editor.selectionEnd;
+      editor.setRangeText(text, s, e, "end");
+    }
+    updateGutter();
+  }
+  editor.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { escFlag = true; return; }
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); check(); return; }
+    if (e.key === "Tab" && !e.shiftKey && !escFlag) { e.preventDefault(); insertText("  "); return; }
+    if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+      const before = editor.value.slice(0, editor.selectionStart);
+      const line = before.slice(before.lastIndexOf("\n") + 1);
+      let indent = (line.match(/^\s*/) || [""])[0];
+      if (/[{(\[]\s*$/.test(line) || /<[A-Za-z][^>]*[^/]>\s*$/.test(line)) indent += "  ";
+      e.preventDefault(); insertText("\n" + indent);
+      return;
+    }
+    escFlag = false;
+  });
+  editor.addEventListener("input", () => {
+    updateGutter();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { state.code[state.current] = editor.value; save(); }, 300);
+  });
+  editor.addEventListener("scroll", () => { $("gutter").scrollTop = editor.scrollTop; });
+  editor.addEventListener("blur", () => { escFlag = false; });
+
+  $("btn-run").addEventListener("click", run);
+  $("btn-check").addEventListener("click", check);
+
+  function renderAll() {
+    if (!isReachable(state.current)) state.current = 1;
+    renderTally(); renderDoors(); renderBrief(); loadEditor(); resetPanels(); renderFinale();
+  }
+  window.__vault = { LEVELS, state, check, goTo };
+  renderAll();
+})();
+</script>
+
+</body></html>
