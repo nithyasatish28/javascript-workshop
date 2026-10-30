@@ -5,9 +5,9 @@ function App() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    fetch("https://dummyjson.com/products")
+    fetch("http://127.0.0.1:8001/menu")
       .then((response) => response.json())
-      .then((data) => setProducts(data.products));
+      .then((data) => setProducts(data));
   }, []);
 
   return (
